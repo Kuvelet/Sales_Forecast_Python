@@ -58,5 +58,17 @@ Remove irrelevant rows as per your criteria:
 
 ```python
 
+# Check initial row count : The f prefix means “formatted string”.Everything inside the {} is evaluated as Python code, and its result is inserted into the string.data.shape[0] gives just the row count.
 
+print(f"Initial Rows: {data.shape[0]}")
+
+# Remove rows with Quantity = 0 or Quantity is null
+data_clean = data[data['Quantity'].notnull() & (data['Quantity'] != 0)]
+
+# Remove rows with null Item ID
+data_clean = data_clean[data_clean['Item ID'].notnull()]
+
+# Check rows after cleaning
+print(f"Rows after cleaning: {data_clean.shape[0]}")
+```
 
