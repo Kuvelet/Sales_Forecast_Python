@@ -62,7 +62,8 @@ Remove irrelevant rows as per your criteria:
 
 print(f"Initial Rows: {data.shape[0]}")
 
-# Remove rows with Quantity = 0 or Quantity is null
+# Remove rows with Quantity = 0 or Quantity is null : Boolean indexing — selecting rows where a certain condition is True
+
 data_clean = data[data['Quantity'].notnull() & (data['Quantity'] != 0)]
 
 # Remove rows with null Item ID
