@@ -25,7 +25,7 @@ Forecasting monthly auto part SKU sales using historical sales data (2023 onward
 
 ### 1) Data Cleaning & Preparation
 
-I start by importing Python libraries required for data analysis and cleaning.
+Step 1.1: Import Necessary Libraries
 
 ```python
 # Data manipulation
@@ -39,7 +39,24 @@ from datetime import datetime
 pd.set_option('display.max_columns', None)
 ```
 
+Step 1.2: Load the Data from CSV
 
+```python
+# Load data from your CSV file
+data = pd.read_csv('your_sales_data.csv')
+
+# Preview first 5 rows
+data.head()
+```
+
+Step 1.3: Initial Data Cleaning
+
+Remove irrelevant rows as per your criteria:
+
+- Remove rows where Quantity is 0 or null.
+- Remove rows where Item ID is null.
+
+```python
 
 
 
