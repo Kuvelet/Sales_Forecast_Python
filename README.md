@@ -39,7 +39,7 @@ from datetime import datetime
 pd.set_option('display.max_columns', None)
 ```
 
-Step 1.2: Load the Data from CSV
+##### Step 1.2: Load the Data from CSV
 
 ```python
 # Load data from your CSV file
@@ -49,7 +49,7 @@ data = pd.read_csv('your_sales_data.csv')
 data.head()
 ```
 
-Step 1.3: Initial Data Cleaning
+##### Step 1.3: Initial Data Cleaning
 
 Remove irrelevant rows as per your criteria:
 
@@ -72,17 +72,34 @@ data_clean = data_clean[data_clean['Item ID'].notnull()]
 # Check rows after cleaning
 print(f"Rows after cleaning: {data_clean.shape[0]}")
 ```
-Step 1.4: Filter Data from 2023 onward
+##### Step 1.4: Filter Data from 2023 onward
 
 ```python
 # Convert 'Date' to datetime
 data_clean['Date'] = pd.to_datetime(data_clean['Date'], errors='coerce')
 
 # Filter data from 2023 onwards
-data_2023 = data_clean[data_clean['Date'] >= '2023-01-01']
+data_2023 = data_clean[data_clean['Date'] >= '2023-01-01'].copy()
 
 # Check rows after filtering
 print(f"Rows from 2023 onwards: {data_2023.shape[0]}")
 ```
 
- Step 1.5: Aggregate Monthly Sales per SKU
+##### Step 1.5: Aggregate Monthly Sales per SKU
+
+```python
+# Create Year-Month column
+data_2023['YearMonth'] = data_2023['Date'].dt.to_period('M')
+
+# Aggregate monthly quantities per SKU
+monthly_sku_data = data_2023.groupby(['YearMonth', 'Item ID']).agg({
+    'Quantity': 'sum'
+}).reset_index()
+
+# Rename columns clearly
+monthly_sku_data.columns = ['YearMonth', 'Item_ID', 'Monthly_Quantity']
+
+# Check aggregated data
+monthly_sku_data.head()
+```
+
