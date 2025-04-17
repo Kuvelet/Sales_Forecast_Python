@@ -25,7 +25,7 @@ Forecasting monthly auto part SKU sales using historical sales data (2023 onward
 
 ### 1) Data Cleaning & Preparation
 
-##### Step 1.1: Import Necessary Libraries
+#### Step 1.1: Import Necessary Libraries
 
 ```python
 # Step 1.1
@@ -41,7 +41,7 @@ pd.set_option('display.max_columns', None)
 
 ```
 
-##### Step 1.2: Load the Data from CSV
+#### Step 1.2: Load the Data from CSV
 
 ```python
 # Step 1.2
@@ -53,7 +53,7 @@ data.head()
 
 ```
 
-##### Step 1.3: Initial Data Cleaning
+#### Step 1.3: Initial Data Cleaning
 
 Remove irrelevant rows as per your criteria:
 
@@ -76,7 +76,7 @@ data_clean = data_clean[data_clean['Item ID'].notnull()]
 # Check rows after cleaning
 print(f"Rows after cleaning: {data_clean.shape[0]}")
 ```
-##### Step 1.4: Filter Data from 2023 onward
+#### Step 1.4: Filter Data from 2023 onward
 
 ```python
 # Step 1.4
@@ -90,7 +90,7 @@ data_2023 = data_clean[data_clean['Date'] >= '2023-01-01'].copy()
 print(f"Rows from 2023 onwards: {data_2023.shape[0]}")
 ```
 
-##### Step 1.5: Aggregate Monthly Sales per SKU
+#### Step 1.5: Aggregate Monthly Sales per SKU
 
 ```python
 # Step 1.5
@@ -109,7 +109,7 @@ monthly_sku_data.columns = ['YearMonth', 'Item_ID', 'Monthly_Quantity']
 monthly_sku_data.head()
 ```
 
-##### Step 1.6: Identify Top SKUs
+#### Step 1.6: Identify Top SKUs
 
 ```python
 # Step 1.6
@@ -124,7 +124,7 @@ top_skus = top_skus.rename(columns={'Monthly_Quantity': 'Total Sales Quantity'})
 top_skus.head(10)
 ```
 
-##### Step 1.7: Seperate monthly_sku_data
+#### Step 1.7: Seperate monthly_sku_data
 
 ```python
 # Step 1.7
@@ -140,7 +140,7 @@ print(f"Remaining SKUs data rows: {remaining_sku_data.shape[0]}")
 print(f"All SKUs data rows: {monthly_sku_data.shape[0]}")
 ```
 
-##### Step 1.8: Export Datasets
+#### Step 1.8: Export Datasets
 
 ```python
 # Step 1.8
@@ -149,3 +149,22 @@ top_sku_data.to_csv('top_sku_monthly.csv', index=False)
 remaining_sku_data.to_csv('remaining_sku_monthly.csv', index=False)
 monthly_sku_data.to_csv('all_sku_monthly.csv', index=False)
 ```
+
+In this section, we performed essential preprocessing to ensure our dataset was clean and ready for reliable forecasting. The key actions included:
+
+- **Removed invalid entries**: Rows with `null` or `0` quantities were filtered out to avoid skewing the results.
+- **Ensured SKU validity**: Entries without a valid `Item ID` were excluded, as each SKU must be uniquely identifiable.
+- **Filtered time range**: Data was limited to entries from January 1, 2023, onward to focus on recent sales patterns.
+- **Grouped and aggregated**: Cleaned daily data was aggregated monthly per SKU to simplify modeling and reduce noise.
+- **Segmented dataset**: SKUs were divided into two categories:
+  - `top_sku_data`: The top 500 SKUs by total quantity sold.
+  - `remaining_sku_data`: All other SKUs.
+- **Exported datasets**: Cleaned and grouped data was exported into three separate CSV files for streamlined access:
+  - `top_sku_monthly.csv`
+  - `remaining_sku_monthly.csv`
+  - `all_sku_monthly.csv`
+
+This structured approach improves model performance by ensuring consistent and high-quality input data.
+
+---
+
