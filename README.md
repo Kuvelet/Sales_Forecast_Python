@@ -28,25 +28,29 @@ Forecasting monthly auto part SKU sales using historical sales data (2023 onward
 ##### Step 1.1: Import Necessary Libraries
 
 ```python
-# Data manipulation
+# Step 1.1
+# Import Libraries
 import pandas as pd
 import numpy as np
 
-# Date handling
+# To handle dates appropriately
 from datetime import datetime
 
 # Display options
 pd.set_option('display.max_columns', None)
+
 ```
 
 ##### Step 1.2: Load the Data from CSV
 
 ```python
+# Step 1.2
 # Load data from your CSV file
-data = pd.read_csv('your_sales_data.csv')
+data = pd.read_csv(r'V:\LIT\Can Kuvelet\DATA\SO_ISC_FORECAST.CSV', encoding='ISO-8859-1')
 
 # Preview first 5 rows
 data.head()
+
 ```
 
 ##### Step 1.3: Initial Data Cleaning
@@ -57,7 +61,7 @@ Remove irrelevant rows as per your criteria:
 - Remove rows where Item ID is null.
 
 ```python
-
+# Step 1.3
 # Check initial row count : The f prefix means “formatted string”.Everything inside the {} is evaluated as Python code, and its result is inserted into the string.data.shape[0] gives just the row count.
 
 print(f"Initial Rows: {data.shape[0]}")
@@ -75,6 +79,7 @@ print(f"Rows after cleaning: {data_clean.shape[0]}")
 ##### Step 1.4: Filter Data from 2023 onward
 
 ```python
+# Step 1.4
 # Convert 'Date' to datetime
 data_clean['Date'] = pd.to_datetime(data_clean['Date'], errors='coerce')
 
@@ -88,6 +93,7 @@ print(f"Rows from 2023 onwards: {data_2023.shape[0]}")
 ##### Step 1.5: Aggregate Monthly Sales per SKU
 
 ```python
+# Step 1.5
 # Create Year-Month column
 data_2023['YearMonth'] = data_2023['Date'].dt.to_period('M')
 
@@ -103,3 +109,43 @@ monthly_sku_data.columns = ['YearMonth', 'Item_ID', 'Monthly_Quantity']
 monthly_sku_data.head()
 ```
 
+##### Step 1.6: Identify Top SKUs
+
+```python
+# Step 1.6
+# Get total quantities per SKU to identify top SKUs
+total_qty_per_sku = monthly_sku_data.groupby('Item_ID')['Monthly_Quantity'].sum().reset_index()
+
+# Sort SKUs by descending quantity
+top_skus = total_qty_per_sku.sort_values(by='Monthly_Quantity', ascending=False).head(500)
+top_skus = top_skus.rename(columns={'Monthly_Quantity': 'Total Sales Quantity'})
+
+# Check top SKUs
+top_skus.head(10)
+```
+
+##### Step 1.7: Seperate monthly_sku_data
+
+```python
+# Step 1.7
+# Top 500 SKUs data
+top_sku_data = monthly_sku_data[monthly_sku_data['Item_ID'].isin(top_skus['Item_ID'])]
+
+# Remaining SKUs data
+remaining_sku_data = monthly_sku_data[~monthly_sku_data['Item_ID'].isin(top_skus['Item_ID'])]
+
+# Preview data
+print(f"Top SKUs data rows: {top_sku_data.shape[0]}")
+print(f"Remaining SKUs data rows: {remaining_sku_data.shape[0]}")
+print(f"All SKUs data rows: {monthly_sku_data.shape[0]}")
+```
+
+##### Step 1.8: Export Datasets
+
+```python
+# Step 1.8
+# Export datasets
+top_sku_data.to_csv('top_sku_monthly.csv', index=False)
+remaining_sku_data.to_csv('remaining_sku_monthly.csv', index=False)
+monthly_sku_data.to_csv('all_sku_monthly.csv', index=False)
+```
