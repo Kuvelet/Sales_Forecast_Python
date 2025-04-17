@@ -46,7 +46,7 @@ pd.set_option('display.max_columns', None)
 ```python
 # Step 1.2
 # Load data from your CSV file
-data = pd.read_csv(r'V:\LIT\Can Kuvelet\DATA\SO_ISC_FORECAST.CSV', encoding='ISO-8859-1')
+data = pd.read_csv(r'V:\DATA\SO_FORECAST.CSV', encoding='ISO-8859-1')
 
 # Preview first 5 rows
 data.head()
