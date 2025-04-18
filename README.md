@@ -298,4 +298,16 @@ monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str)
 os.makedirs("prophet_forecasts", exist_ok=True)
 ```
 
+#### Step 3A.4: Forecast Each SKU
+
+Prophet requires two columns:
+
+- [ds] : Date
+- [y] : Value to forecast
+
+I’ll loop through each SKU and generate a forecast.
+
+
+
+
 
