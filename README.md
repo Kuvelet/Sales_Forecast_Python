@@ -267,6 +267,35 @@ for sku in sample_skus:
 
 - Use Facebook Prophet to forecast the next 6 months of sales for each SKU individually.
 
+#### Step 3A.1: Install & Import Required Libraries
 
+```python
+# If not already installed
+!pip install prophet
+
+# Imports
+import pandas as pd
+from prophet import Prophet
+from tqdm import tqdm  # progress bar
+import matplotlib.pyplot as plt
+import os
+```
+
+#### Step 3A.2: Load Monthly Data
+
+```python
+# Load monthly SKU data
+monthly_data = pd.read_csv('monthly_sku_data.csv')
+
+# Convert date column to datetime
+monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str))
+```
+
+#### Step 3A.3: Create Output Folder for Forecasts
+
+```python
+# Create a folder to store forecast results
+os.makedirs("prophet_forecasts", exist_ok=True)
+```
 
 
