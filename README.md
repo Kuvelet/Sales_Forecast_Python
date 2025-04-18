@@ -230,3 +230,35 @@ plt.ylabel("Item ID")
 plt.grid(True)
 plt.show()
 ```
+![top_sku_monthly](top_sku_monthly.jpg)
+
+#### Step 2.4: Individual SKU Seasonality Check
+
+```python
+
+# Step 2.4: Individual SKU Seasonality Check
+import os
+export_folder = "sku_charts"
+os.makedirs(export_folder, exist_ok=True)
+
+sample_skus = monthly_data['Item_ID'].value_counts().head(3).index.tolist()
+
+for sku in sample_skus:
+    temp = monthly_data[monthly_data['Item_ID'] == sku]
+    plt.figure(figsize=(10, 4))
+    sns.lineplot(data=temp, x='YearMonth', y='Monthly_Quantity')
+    plt.title(f'SKU {sku} - Monthly Sales Trend')
+    plt.xlabel("Month")
+    plt.ylabel("Quantity")
+    plt.grid(True)
+
+# Export before showing
+    filename = f"{export_folder}/sku_{sku}_sales_trend.jpg"
+    plt.tight_layout()
+    plt.savefig(filename, format='jpg', dpi=300)
+    
+    plt.show()
+```
+![sku_8512191_sales_trend](sku_8512191_sales_trend.jpg)
+![sku_8512323_sales_trend](sku_8512323_sales_trend.jpg)
+![sku_8514156_sales_trend](sku_8514156_sales_trend.jpg)
