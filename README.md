@@ -230,7 +230,7 @@ plt.ylabel("Item ID")
 plt.grid(True)
 plt.show()
 ```
-![top_sku_monthly](top_sku_monthly.jpg)
+![top20_skus_monthly](top20_skus_monthly.jpg)
 
 #### Step 2.4: Individual SKU Seasonality Check
 
