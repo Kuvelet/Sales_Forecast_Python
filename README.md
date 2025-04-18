@@ -209,7 +209,7 @@ plt.savefig("monthly_so_trend.jpg", format='jpg', dpi=300)
 
 plt.show()
 ```
-![monthly_so_trend](images/monthly_so_trend.jpg)
+![monthly_so_trend](monthly_so_trend.jpg)
 
 #### Step 2.3: Sales Distribution by SKU
 
