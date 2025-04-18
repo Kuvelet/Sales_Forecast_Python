@@ -262,3 +262,11 @@ for sku in sample_skus:
 ![sku_8512191_so_trend](sku_8512191_so_trend.jpg)
 ![sku_8512323_so_trend](sku_8512323_so_trend.jpg)
 ![sku_8514156_so_trend](sku_8514156_so_trend.jpg)
+
+### STEP 3A - Prophet Model
+
+- Use Facebook Prophet to forecast the next 6 months of sales for each SKU individually.
+
+
+
+
