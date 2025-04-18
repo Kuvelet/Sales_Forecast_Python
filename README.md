@@ -259,6 +259,6 @@ for sku in sample_skus:
     
     plt.show()
 ```
-![sku_8512191_sales_trend](sku_8512191_sales_trend.jpg)
-![sku_8512323_sales_trend](sku_8512323_sales_trend.jpg)
-![sku_8514156_sales_trend](sku_8514156_sales_trend.jpg)
+![sku_8512191_so_trend](sku_8512191_sales_trend.jpg)
+![sku_8512323_so_trend](sku_8512323_sales_trend.jpg)
+![sku_8514156_so_trend](sku_8514156_sales_trend.jpg)
