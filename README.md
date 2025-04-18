@@ -23,7 +23,7 @@ Forecasting monthly auto part SKU sales using historical sales data (2023 onward
 - Jupyter Notebook
 - GitHub (for documentation & collaboration)
 
-### 1) Data Cleaning & Preparation
+### STEP 1 - Data Cleaning & Preparation
 
 #### Step 1.1: Import Necessary Libraries
 
@@ -167,4 +167,25 @@ In this section, we performed essential preprocessing to ensure our dataset was 
 This structured approach improves model performance by ensuring consistent and high-quality input data.
 
 ---
+
+### STEP 2 - Exploratory Data Analysis (EDA)
+
+#### Step 2.1: Import Data & Libraries
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load your cleaned monthly SKU data
+monthly_data = pd.read_csv('monthly_sku_data.csv')
+
+# Convert 'YearMonth' to datetime
+monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str))
+```
+
+#### Step 2.2: Overview of SKU Distribution
+
+```
+
 
