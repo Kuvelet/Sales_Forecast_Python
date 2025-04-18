@@ -186,6 +186,46 @@ monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str)
 
 #### Step 2.2: Overview of SKU Distribution
 
+```pyton
+# Step 2.2
+# Number of unique SKUs
+print("Unique SKUs:", monthly_data['Item_ID'].nunique())
+
+# Monthly time range
+print("Date Range:", monthly_data['YearMonth'].min(), "to", monthly_data['YearMonth'].max())
+
+# Plot: Monthly sales volume trend (Total)
+monthly_trend = monthly_data.groupby('YearMonth')['Monthly_Quantity'].sum().reset_index()
+
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=monthly_trend, x='YearMonth', y='Monthly_Quantity')
+plt.title("Total Monthly Received SO's")
+plt.xlabel("Month")
+plt.ylabel("Quantity")
+plt.grid(True)
+
+plt.tight_layout()
+plt.savefig("monthly_so_trend.jpg", format='jpg', dpi=300)
+
+plt.show()
 ```
 
+#### Step 2.3: Sales Distribution by SKU
 
+```python
+# Step 2.3: Sales Distribution by SKU
+# Total sales per SKU
+sku_totals = monthly_data.groupby('Item_ID')['Monthly_Quantity'].sum().sort_values(ascending=False)
+
+# Convert index (Item_IDs) to string for better y-axis labels
+top_20 = sku_totals.head(20)
+top_20.index = top_20.index.astype(str)
+
+plt.figure(figsize=(12, 6))
+sns.barplot(x=top_20.values, y=top_20.index)
+plt.title("Top 20 SKUs by Total SO Received")
+plt.xlabel("Total Quantity")
+plt.ylabel("Item ID")
+plt.grid(True)
+plt.show()
+```
