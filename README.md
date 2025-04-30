@@ -265,49 +265,48 @@ for sku in sample_skus:
 
 ### STEP 3A - Prophet Model
 
-- Use Facebook Prophet to forecast the next 6 months of sales for each SKU individually.
+This section demonstrates a clean and scalable forecasting pipeline using Facebook Prophet to generate monthly demand forecasts for individual automotive part SKUs. The pipeline ensures full alignment between historical sales data and Prophet forecast outputs through end-of-month date normalization.
 
-#### Step 3A.1: Install & Import Required Libraries
+#### Dataset Overview
 
-```python
-# If not already installed
-!pip install prophet
+- Source: Internal daily sales order data (2015–2025)
+- Preprocessed To: Monthly aggregated SKU-level quantities
+- Date Field Used: YearMonth
+- Forecast Target: Monthly_Quantity per SKU
 
-# Imports
-import pandas as pd
-from prophet import Prophet
-from tqdm import tqdm  # progress bar
-import matplotlib.pyplot as plt
-import os
-```
+#### Key Design Decisions
 
-#### Step 3A.2: Load Monthly Data
+##### 1) End-of-Month (MonthEnd) Alignment
 
-```python
-# Load monthly SKU data
-monthly_data = pd.read_csv('monthly_sku_data.csv')
+Prophet outputs forecast dates at the end of each month (e.g. 2023-01-31, 2023-02-28).
 
-# Convert date column to datetime
-monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str))
-```
+To ensure all joins, evaluations, and comparisons work without mismatch:
 
-#### Step 3A.3: Create Output Folder for Forecasts
+- All YearMonth values were explicitly converted using:
 
 ```python
-# Create a folder to store forecast results
-os.makedirs("prophet_forecasts", exist_ok=True)
+monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str)) + pd.offsets.MonthEnd(0)
 ```
+This ensures that every timestamp reflects the last day of each month.
 
-#### Step 3A.4: Forecast Each SKU
+-The SKU-date grid (full_date_range) was generated using:
 
-Prophet requires two columns:
+```python
+full_date_range = pd.date_range(start='2023-01-01', end='2025-03-31', freq='ME')
+```
+The freq='ME' option ensures all generated dates are end-of-month values, matching Prophet's output.
 
-- [ds] : Date
-- [y] : Value to forecast
+##### 2) Training/Test Split Logic
 
-I’ll loop through each SKU and generate a forecast.
+| Type        | Date Range                    |
+|-------------|-------------------------------|
+| Training    | 2023-01-31 to 2024-08-31       |
+| Forecasting | 2024-09-30 to 2025-03-31       |
 
+Prophet is fit on training data and asked to predict the next 7 months. There is no overlap between training and forecast periods, ensuring honest evaluation.
 
+##### 3) Forecast Granularity
 
-
+- Each SKU is trained and forecasted individually using Prophet.
+- Forecasts are stored as a combined DataFrame with Item_ID, ForecastMonth, and Forecasted_Quantity.
 
