@@ -23,9 +23,9 @@ Forecasting monthly auto part SKU sales using historical sales data (2023 onward
 - Jupyter Notebook
 - GitHub (for documentation & collaboration)
 
-### STEP 1 - Data Cleaning & Preparation
+## STEP 1 - Data Cleaning & Preparation
 
-#### Step 1.1: Import Necessary Libraries
+### Step 1.1: Import Necessary Libraries
 
 ```python
 # Step 1.1
@@ -41,7 +41,7 @@ pd.set_option('display.max_columns', None)
 
 ```
 
-#### Step 1.2: Load the Data from CSV
+### Step 1.2: Load the Data from CSV
 
 ```python
 # Step 1.2
@@ -53,7 +53,7 @@ data.head()
 
 ```
 
-#### Step 1.3: Initial Data Cleaning
+### Step 1.3: Initial Data Cleaning
 
 Remove irrelevant rows as per your criteria:
 
@@ -76,7 +76,7 @@ data_clean = data_clean[data_clean['Item ID'].notnull()]
 # Check rows after cleaning
 print(f"Rows after cleaning: {data_clean.shape[0]}")
 ```
-#### Step 1.4: Filter Data from 2023 onward
+### Step 1.4: Filter Data from 2023 onward
 
 ```python
 # Step 1.4
@@ -90,7 +90,7 @@ data_2023 = data_clean[data_clean['Date'] >= '2023-01-01'].copy()
 print(f"Rows from 2023 onwards: {data_2023.shape[0]}")
 ```
 
-#### Step 1.5: Aggregate Monthly Sales per SKU
+### Step 1.5: Aggregate Monthly Sales per SKU
 
 ```python
 # Step 1.5
@@ -109,7 +109,7 @@ monthly_sku_data.columns = ['YearMonth', 'Item_ID', 'Monthly_Quantity']
 monthly_sku_data.head()
 ```
 
-#### Step 1.6: Identify Top SKUs
+### Step 1.6: Identify Top SKUs
 
 ```python
 # Step 1.6
@@ -124,7 +124,7 @@ top_skus = top_skus.rename(columns={'Monthly_Quantity': 'Total Sales Quantity'})
 top_skus.head(10)
 ```
 
-#### Step 1.7: Seperate monthly_sku_data
+### Step 1.7: Seperate monthly_sku_data
 
 ```python
 # Step 1.7
@@ -140,7 +140,7 @@ print(f"Remaining SKUs data rows: {remaining_sku_data.shape[0]}")
 print(f"All SKUs data rows: {monthly_sku_data.shape[0]}")
 ```
 
-#### Step 1.8: Export Datasets
+### Step 1.8: Export Datasets
 
 ```python
 # Step 1.8
@@ -168,9 +168,9 @@ This structured approach improves model performance by ensuring consistent and h
 
 ---
 
-### STEP 2 - Exploratory Data Analysis (EDA)
+## STEP 2 - Exploratory Data Analysis (EDA)
 
-#### Step 2.1: Import Data & Libraries
+### Step 2.1: Import Data & Libraries
 
 ```python
 import pandas as pd
@@ -184,7 +184,7 @@ monthly_data = pd.read_csv('monthly_sku_data.csv')
 monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str))
 ```
 
-#### Step 2.2: Overview of SKU Distribution
+### Step 2.2: Overview of SKU Distribution
 
 ```pyton
 # Step 2.2
@@ -211,7 +211,7 @@ plt.show()
 ```
 ![monthly_so_trend](monthly_so_trend.jpg)
 
-#### Step 2.3: Sales Distribution by SKU
+### Step 2.3: Sales Distribution by SKU
 
 ```python
 # Step 2.3: Sales Distribution by SKU
@@ -232,7 +232,7 @@ plt.show()
 ```
 ![top20_skus_total_so](top20_skus_total_so.jpg)
 
-#### Step 2.4: Individual SKU Seasonality Check
+### Step 2.4: Individual SKU Seasonality Check
 
 ```python
 
@@ -263,20 +263,20 @@ for sku in sample_skus:
 ![sku_8512323_so_trend](sku_8512323_so_trend.jpg)
 ![sku_8514156_so_trend](sku_8514156_so_trend.jpg)
 
-### STEP 3A - Prophet Model
+## STEP 3A - Prophet Model
 
 This section demonstrates a clean and scalable forecasting pipeline using Facebook Prophet to generate monthly demand forecasts for individual automotive part SKUs. The pipeline ensures full alignment between historical sales data and Prophet forecast outputs through end-of-month date normalization.
 
-#### Dataset Overview
+### Dataset Overview
 
 - Source: Internal daily sales order data (2015–2025)
 - Preprocessed To: Monthly aggregated SKU-level quantities
 - Date Field Used: YearMonth
 - Forecast Target: Monthly_Quantity per SKU
 
-#### Key Design Decisions
+### Key Design Decisions
 
-##### 1) End-of-Month (MonthEnd) Alignment
+#### 1) End-of-Month (MonthEnd) Alignment
 
 Prophet outputs forecast dates at the end of each month (e.g. 2023-01-31, 2023-02-28).
 
@@ -289,14 +289,14 @@ monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str)
 ```
 This ensures that every timestamp reflects the last day of each month.
 
--The SKU-date grid (full_date_range) was generated using:
+- The SKU-date grid (full_date_range) was generated using:
 
 ```python
 full_date_range = pd.date_range(start='2023-01-01', end='2025-03-31', freq='ME')
 ```
 The freq='ME' option ensures all generated dates are end-of-month values, matching Prophet's output.
 
-##### 2) Training/Test Split Logic
+#### 2) Training/Test Split Logic
 
 | Type        | Date Range                    |
 |-------------|-------------------------------|
@@ -305,8 +305,11 @@ The freq='ME' option ensures all generated dates are end-of-month values, matchi
 
 Prophet is fit on training data and asked to predict the next 7 months. There is no overlap between training and forecast periods, ensuring honest evaluation.
 
-##### 3) Forecast Granularity
+#### 3) Forecast Granularity
 
 - Each SKU is trained and forecasted individually using Prophet.
 - Forecasts are stored as a combined DataFrame with Item_ID, ForecastMonth, and Forecasted_Quantity.
+
+### Facebook Prophet Pipeline Steps with Explanations
+
 
