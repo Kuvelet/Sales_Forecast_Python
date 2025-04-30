@@ -312,4 +312,110 @@ Prophet is fit on training data and asked to predict the next 7 months. There is
 
 ### Facebook Prophet Pipeline Steps with Explanations
 
+#### Step 3A.1 - Load Libraries and Normalize Data
 
+- Loads the preprocessed monthly sales data from CSV.
+- Converts all date values in the YearMonth column to the last day of each month (e.g. 2023-01-31)
+
+```python
+import pandas as pd
+import numpy as np
+from itertools import product
+
+# Load your existing monthly SKU data
+monthly_data = pd.read_csv("all_sku_monthly.csv")
+# Convert to end of month to align with Prophet forecast output
+monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str)) + pd.offsets.MonthEnd(0)
+```
+
+#### Step 3A.2 - Create Complete SKU-Month Grid
+
+- Extracts all unique SKUs.
+- Creates a list of all month-end dates from Jan 2023 to Mar 2025.
+- Uses product() to build a DataFrame with all possible combinations of SKU and date.
+- Merges the original sales data into the full SKU-month grid.
+- Fills in missing sales values with 0, so we can forecast even when there's no recorded sales.
+
+```python
+
+full_date_range = pd.date_range(start='2023-01-01', end='2025-03-31', freq='ME')
+
+sku_list = monthly_data['Item_ID'].unique()
+
+sku_month_combinations = pd.DataFrame(list(product(sku_list, full_date_range)), columns=['Item_ID', 'YearMonth'])
+
+all_sku_monthly_w0 = pd.merge(sku_month_combinations, monthly_data, on=['Item_ID', 'YearMonth'], how='left')
+
+all_sku_monthly_w0['Monthly_Quantity'] = all_sku_monthly_w0['Monthly_Quantity'].fillna(0)
+
+all_sku_monthly_w0.to_csv("all_sku_monthly_w0.csv", index=False)
+
+all_sku_monthly_w0.head()
+```
+
+#### Step3A.3 - Set Training and Test Set
+
+```python
+# Training set (historical)
+training_data = all_sku_monthly_w0[
+    (all_sku_monthly_w0['YearMonth'] >= '2023-01-31') & 
+    (all_sku_monthly_w0['YearMonth'] <= '2024-08-31')
+]
+
+# Test set (evaluation)
+test_data = all_sku_monthly_w0[
+    (all_sku_monthly_w0['YearMonth'] >= '2024-09-30') & 
+    (all_sku_monthly_w0['YearMonth'] <= '2025-03-31')
+]
+```
+#### Step3A.4 - Prophet Forecasting Loop
+
+- Loads Prophet, tqdm (for progress bars), and suppresses warnings.
+- Prepares a list to collect forecasts per SKU
+- Loops through each SKU.
+- Retrieves the historical training data (date + quantity)
+- Skips SKUs with all-zero sales (nothing meaningful to model).
+- Renames columns to Prophet's required format: ds (date) and y (target).
+- Instantiates a Prophet model and trains it on the SKU's data.
+- Generates the next 7 month-end dates for forecasting.
+- Runs prediction.
+- Appends SKU ID to the forecast.
+- Adds the forecast result to the list.
+- Combines all SKU forecasts into one DataFrame.
+- Renames output columns to make them easier to interpret.
+- Saves the full forecast result to CSV.
+
+```python
+from prophet import Prophet
+from tqdm import tqdm
+import warnings
+warnings.filterwarnings("ignore")
+
+prophet_forecasts_nofilter = []
+
+for sku in tqdm(sku_list):
+    sku_train_df = training_data[training_data['Item_ID'] == sku][['YearMonth', 'Monthly_Quantity']]
+
+    if sku_train_df['Monthly_Quantity'].sum() == 0:
+        continue
+
+    prophet_df = sku_train_df.rename(columns={'YearMonth': 'ds', 'Monthly_Quantity': 'y'})
+
+    try:
+        model = Prophet()
+        model.fit(prophet_df)
+
+        future = model.make_future_dataframe(periods=7, freq='M')
+        forecast = model.predict(future)
+
+        forecast['Item_ID'] = sku
+        prophet_forecasts_nofilter.append(forecast)
+
+    except Exception as e:
+        print(f"SKU {sku} error: {e}")
+
+prophet_forecast_df = pd.concat(prophet_forecasts_nofilter, ignore_index=True)
+prophet_forecast_df.rename(columns={'ds': 'ForecastMonth', 'yhat': 'Forecasted_Quantity'}, inplace=True)
+
+prophet_forecast_df.to_csv("prophet_full_forecast.csv", index=False)
+```
