@@ -263,7 +263,7 @@ for sku in sample_skus:
 ![sku_8512323_so_trend](sku_8512323_so_trend.jpg)
 ![sku_8514156_so_trend](sku_8514156_so_trend.jpg)
 
-## STEP 3A - Prophet Model
+## Step 3A - Prophet Model
 
 In this section, we implement a modular forecasting pipeline using Facebook Prophet, a powerful time series model developed for business applications with seasonality and trend components. Prophet is particularly well-suited for datasets with clear temporal structure and missing data, and it allows for interpretable forecasting at scale. We train a separate model for each SKU using monthly sales data from January 2023 to August 2024, forecast the next 7 months, and clean the results for usability. Prophet’s strength lies in its ability to model trends automatically and generate forecasts that can adapt to the dynamic behavior of each product, making it ideal for demand planning and procurement decisions.
 
@@ -773,3 +773,66 @@ To ensure completeness and robustness:
 - Evaluation was performed on a 7-month forecast horizon (September 2024 to March 2025), comparing predictions to actual sales using RMSE, MAE, and MAPE.
 
 These metrics allowed us to objectively compare ARIMA against other models (such as Prophet) and determine the most reliable forecasting strategy for procurement planning.
+
+## Step 4 – Prophet vs ARIMA Forecast Accuracy Evaluation
+
+This step performs a side-by-side performance comparison of the Prophet and ARIMA models across the same forecast horizon (September 2024 to March 2025). The evaluation uses industry-standard error metrics to quantify which model provided better sales quantity forecasts for the SKUs.
+
+What Below Code Does:
+- Loads final forecast comparison files for both Prophet and ARIMA.
+- Filters only the forecast period (test set: September 2024 – March 2025).
+- Computes three key metrics for each model:
+  - RMSE: Sensitive to large errors, good for penalizing poor predictions.
+  - MAE: Interpretable and stable across scales.
+  - MAPE: Expresses error as a percentage of actuals (excluding zeros).
+  - Displays all results side-by-side, offering a direct comparison of accuracy between the two approaches.
+ 
+```python
+import pandas as pd
+from sklearn.metrics import (
+    root_mean_squared_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error
+)
+
+# Load comparison datasets
+prophet_df = pd.read_csv("actual_vs_prophet_forecasts.csv")
+arima_df = pd.read_csv("actual_vs_arima_forecasts.csv")
+
+# Filter to forecast period
+prophet_eval = prophet_df[prophet_df['ForecastMonth'] >= '2024-09-30']
+arima_eval = arima_df[arima_df['ForecastMonth'] >= '2024-09-30']
+
+# ------------------ Prophet Evaluation ------------------
+rmse_prophet = root_mean_squared_error(prophet_eval['Actual'], prophet_eval['Forecasted_Quantity'])
+mae_prophet = mean_absolute_error(prophet_eval['Actual'], prophet_eval['Forecasted_Quantity'])
+
+# Remove zero-actuals for MAPE
+prophet_mape_df = prophet_eval[prophet_eval['Actual'] != 0]
+mape_prophet = mean_absolute_percentage_error(
+    prophet_mape_df['Actual'], 
+    prophet_mape_df['Forecasted_Quantity']
+) * 100
+
+# ------------------ ARIMA Evaluation ------------------
+rmse_arima = root_mean_squared_error(arima_eval['Actual'], arima_eval['Forecasted_Quantity'])
+mae_arima = mean_absolute_error(arima_eval['Actual'], arima_eval['Forecasted_Quantity'])
+
+arima_mape_df = arima_eval[arima_eval['Actual'] != 0]
+mape_arima = mean_absolute_percentage_error(
+    arima_mape_df['Actual'], 
+    arima_mape_df['Forecasted_Quantity']
+) * 100
+
+# ------------------ Results ------------------
+print("🔮 Prophet:")
+print(f"RMSE: {rmse_prophet:.2f}")
+print(f"MAE: {mae_prophet:.2f}")
+print(f"MAPE: {mape_prophet:.2f}%")
+
+print("\n📉 ARIMA:")
+print(f"RMSE: {rmse_arima:.2f}")
+print(f"MAE: {mae_arima:.2f}")
+print(f"MAPE: {mape_arima:.2f}%")
+```
+## Results & Impacts
