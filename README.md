@@ -379,7 +379,7 @@ In this step, I build a monthly sales forecast for each SKU using Facebook Proph
 
 We train a separate model for each SKU, forecast 7 months into the future, and clean the results for interpretability.
 
-What Below Code Does:
+**What Below Code Does:**
 
 - Loops through each SKU and trains a standalone Prophet model on its monthly sales data.
 - Forecasts 7 months ahead, using the .make_future_dataframe() method.
@@ -446,7 +446,7 @@ prophet_forecast_df.to_csv("prophet_full_forecast.csv", index=False)
 
 After generating SKU-level forecasts with Prophet, we compare those predictions to the actual observed sales. This comparison allows us to evaluate model accuracy and prepare for metric calculations such as RMSE, MAE, and MAPE.
 
-What Below Code Does:
+**What Below Code Does:**
 
 - Creates a new comparison DataFrame that aligns forecasted and actual values for each SKU and each month.
 - Renames YearMonth to ForecastMonth so it can match Prophet’s output format and maintain clarity.
@@ -488,7 +488,7 @@ print("✅ Full Forecast vs Actual (Full Lineup) Saved: 'actual_vs_prophet_forec
 In this step, we compute standard forecast accuracy metrics — RMSE, MAE, and MAPE — by comparing the forecasted quantities with actual sales from the test period (2024-09-30 to 2025-03-31).
 These metrics help quantify how well the Prophet model performed in a real-world scenario.
 
-What Below Code Does:
+**What Below Code Does:**
 
 - Loads the comparison file actual_vs_prophet_forecasts.csv created earlier.
 - Converts the ForecastMonth column to datetime to enable time-based filtering.
@@ -542,7 +542,7 @@ In this section, we implement a second forecasting approach using ARIMA (AutoReg
 
 Before we begin building ARIMA-based forecasts, we import the necessary Python libraries for data manipulation, iteration, and silent error handling. These are foundational tools used throughout the modeling pipeline.
 
-What Below Code Does:
+**What Below Code Does:**
 
 - pandas, The core library for handling structured data. I use it to load CSV files, manipulate time series, and structure forecast outputs.
 - numpy,  Enables efficient numerical operations, such as filling or transforming arrays and computing statistical measures.
@@ -561,7 +561,7 @@ all_sku_monthly_w0['YearMonth'] = pd.to_datetime(all_sku_monthly_w0['YearMonth']
 
 To build reliable ARIMA models, we start by loading the preprocessed dataset that includes every SKU for every month, even those with zero sales. Ensuring complete time series continuity is crucial for ARIMA, which assumes a fixed time interval between observations.This step ensures we have a clean, gap-free, time-indexed dataset before feeding it into ARIMA.
 
-What Below Code Does:
+**What Below Code Does:**
 - Reads the preprocessed file all_sku_monthly_w0.csv, which contains a full grid of monthly sales values for each SKU, including months where no units were sold (represented as zeros).
 - Converts the YearMonth column into a proper datetime format using pd.to_datetime(). This is critical for ARIMA, which requires time series indices to be uniform and date-aware.
 
@@ -579,7 +579,7 @@ all_sku_monthly_w0['YearMonth'] = pd.to_datetime(all_sku_monthly_w0['YearMonth']
 
 To evaluate the forecasting accuracy of our ARIMA models, we split the time series data into training and test sets. Each SKU’s historical sales are divided chronologically, with earlier months used to train the model and later months used to test the forecasted values against actual outcomes.
 
-What Below Code Does:
+**What Below Code Does:**
 - The use of end-of-month-aligned dates (e.g., 2023-01-31) ensures compatibility with Prophet’s outputs and avoids double entries from mismatched date formats.
 - Training Set (January 2023 – August 2024): This period provides up to 20 months of historical data per SKU, giving the ARIMA model enough information to learn patterns in demand.
 - Test Set (September 2024 – March 2025):This 7-month window represents our forecast horizon. Predictions made by ARIMA will be compared against these real sales figures for evaluation.
@@ -604,7 +604,7 @@ test_data = all_sku_monthly_w0[
 
 We use the pmdarima library to automatically fit ARIMA models for each SKU. This library provides the auto_arima() function, which simplifies the model selection process by testing multiple combinations of ARIMA parameters and choosing the best one based on information criteria
 
-What Below Code Does:
+**What Below Code Does:**
 - !pip install pmdarima installs the pmdarima package, which is a Python wrapper around the well-known statsmodels ARIMA implementation. It includes automatic hyperparameter tuning and seasonal decomposition.
 - from pmdarima import auto_arima imports the core function used to build and fit ARIMA models for each SKU.
 
@@ -620,7 +620,7 @@ from pmdarima import auto_arima
 
 In this step, we loop through each unique SKU in the training set, fit a dedicated ARIMA model for each one, and forecast sales for the next 7 months. This logic enables independent forecasting per SKU and includes built-in fallbacks to ensure no product is left behind due to model fitting errors.
 
-What Below Code Does:
+**What Below Code Does:**
 - SKU-by-SKU Training Loop:
   - Iterates through each unique SKU, filters relevant training data, and fits an individual ARIMA model.
 - Model Fitting:
@@ -712,7 +712,7 @@ arima_forecast_df.head()
 
 Once we've generated forecasts for all SKUs, we evaluate model performance by comparing predictions against the actual sales data from the test period. This step ensures we measure how well the ARIMA model performs in real-world forecasting.
 
-What Below Code Does:
+**What Below Code Does:**
 - Creates a test set by filtering only the actuals from the 7-month forecast window.
 - Standardizes the column names (ForecastMonth, Actual) to match the forecast DataFrame and enable clean merging.
 - Merges forecasted values with actual sales using a LEFT JOIN, ensuring that even SKUs without forecasted output are preserved for analysis.
@@ -753,7 +753,7 @@ print("✅ Full Forecast vs Actual (Full Lineup) Saved: 'Actual_vs_arima_forecas
 
 To quantify how well ARIMA forecasts performed, we compute standard error metrics: Root Mean Squared Error (RMSE), Mean Absolute Error (MAE), and Mean Absolute Percentage Error (MAPE). These help assess the deviation between predicted and actual sales for the test period.
 
-What Below Code Does:
+****What Below Code Does:****
 - Loads the forecast vs actual CSV generated in the previous step and parses the ForecastMonth column into datetime format.
 - Filters the dataset to include only the forecast horizon: September 2024 to March 2025.
 - Calculates:
