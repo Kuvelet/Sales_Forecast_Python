@@ -835,4 +835,58 @@ print(f"RMSE: {rmse_arima:.2f}")
 print(f"MAE: {mae_arima:.2f}")
 print(f"MAPE: {mape_arima:.2f}%")
 ```
-## Results & Impacts
+## Final Model Selection: Choosing the Most Effective Forecasting Method
+
+After building and evaluating both Prophet and ARIMA models across ~3,000 unique SKUs, we compared their performance on forecasting monthly sales for the period September 2024 through March 2025. 
+
+The goal was to determine which model delivers the most accurate and stable forecasts to support supplier ordering and inventory planning in the automotive aftermarket parts industry.
+
+The nature of the automotive sector introduces several unique forecasting challenges:
+- SKU diversity and long-tail sales: Thousands of parts may sell sporadically due to vehicle-specific demand.
+- Unpredictable maintenance cycles: Repairs can spike due to recalls, climate changes, or road conditions.
+- Demand fragmentation: Regional preferences and vehicle aging trends vary widely.
+
+### Evaluation Summary
+
+| Model   | RMSE   | MAE   | MAPE    |
+|---------|--------|--------|----------|
+| Prophet | 13.42  | 5.85  | 31.7%   |
+| ARIMA   | 11.76  | 5.02  | 27.3%   |
+
+>  These metrics reflect SKU-level forecasts where real-world sales can be volatile, sparse, or irregular — especially for long-tail parts.
+
+Each model’s performance was measured using:
+- **RMSE (Root Mean Squared Error)** – penalizes large errors
+- **MAE (Mean Absolute Error)** – measures average deviation
+- **MAPE (Mean Absolute Percentage Error)** – indicates error as a percentage of actual sales (excluding zero-sales months)
+
+###  Interpreting the Results
+
+ARIMA outperformed Prophet on every evaluation metric, indicating better short-term forecasting accuracy:
+- Lower RMSE confirms ARIMA made fewer large mistakes
+- Lower MAE shows that its typical error per prediction was lower
+- Lower MAPE makes ARIMA more reliable from a business standpoint, especially for avoiding overstock or understock
+
+
+###  Why ARIMA Was More Suitable?
+
+Although Prophet is designed to model seasonality and growth trends, it tended to overfit or underreact when SKU-level sales showed irregular or sparse patterns which is a trait that is especially common in the automotive industry.
+
+Chassis components such as sway bar links, upper control arms, or subframe bushings often see non-cyclic demand. These items typically fail due to long-term wear, accidents, or corrosion and are rarely replaced on a seasonal schedule.
+
+Prophet sometimes inferred trends where none existed or smoothed out abrupt changes caused by real-world failure events, leading to either overly optimistic forecasts or underpredictions. 
+
+ARIMA, on the other hand:
+- Adapted better to short-term patterns
+- Delivered*more consistent forecasts even with limited historical data
+- Required less tuning, making it scalable for thousands of parts across categories like control arms, and tie rods
+
+Additionally, by disabling seasonality, ARIMA avoided forcing patterns that didn’t exist; making it more honest and reliable for this SKU-level forecasting task.
+
+This aligns with the reality that many parts are only demanded after specific mileage thresholds, breakdowns, or mechanic recommendations, not on predictable seasonal patterns.
+
+For now, ARIMA provides the most practical, scalable, and trustworthy forecasts for our current B2B automotive parts planning environment.
+
+Prophet remains a valuable candidate for SKUs with known seasonal trends. However, given that our company exclusively sells chassis parts — such as control arms, sway bars, struts, and bushings — where sales are largely driven by unpredictable wear-and-tear or accident repair rather than seasonal cycles, Prophet's strength in seasonal modeling provides limited benefit.
+
+Thus, ARIMA provides the most practical, scalable, and trustworthy forecasts for our current B2B chassis parts distribution strategy.
