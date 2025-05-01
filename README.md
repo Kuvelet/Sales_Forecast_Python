@@ -265,7 +265,7 @@ for sku in sample_skus:
 
 ## STEP 3A - Prophet Model
 
-This section demonstrates a clean and scalable forecasting pipeline using Facebook Prophet to generate monthly demand forecasts for individual automotive part SKUs. The pipeline ensures full alignment between historical sales data and Prophet forecast outputs through end-of-month date normalization.
+In this section, we implement a modular forecasting pipeline using Facebook Prophet, a powerful time series model developed for business applications with seasonality and trend components. Prophet is particularly well-suited for datasets with clear temporal structure and missing data, and it allows for interpretable forecasting at scale. We train a separate model for each SKU using monthly sales data from January 2023 to August 2024, forecast the next 7 months, and clean the results for usability. Prophet’s strength lies in its ability to model trends automatically and generate forecasts that can adapt to the dynamic behavior of each product, making it ideal for demand planning and procurement decisions.
 
 ### Dataset Overview
 
@@ -483,4 +483,293 @@ comparison_df.to_csv("actual_vs_prophet_forecasts.csv", index=False)
 
 print("✅ Full Forecast vs Actual (Full Lineup) Saved: 'actual_vs_prophet_forecasts.csv'")
 ```
+#### Step3A.6 - Evaluate Prophet Forecast Accuracy
 
+In this step, we compute standard forecast accuracy metrics — RMSE, MAE, and MAPE — by comparing the forecasted quantities with actual sales from the test period (2024-09-30 to 2025-03-31).
+These metrics help quantify how well the Prophet model performed in a real-world scenario.
+
+What Below Code Does:
+
+- Loads the comparison file actual_vs_prophet_forecasts.csv created earlier.
+- Converts the ForecastMonth column to datetime to enable time-based filtering.
+- Converts the ForecastMonth column to datetime to enable time-based filtering.
+- Computes three metrics:
+  - RMSE (Root Mean Squared Error): Sensitive to large errors; penalizes big misses more.
+  - MAE (Mean Absolute Error): Average absolute difference between prediction and reality.
+  - MAPE (Mean Absolute Percentage Error): Expresses error as a % of the actual — but only calculated where actual ≠ 0 to avoid undefined results.
+- Prints all metrics, rounded to 2 decimal places for reporting.
+
+```python
+import pandas as pd
+from sklearn.metrics import (
+    root_mean_squared_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error
+)
+
+# Load and prepare forecast comparison file
+comparison_df = pd.read_csv("actual_vs_prophet_forecasts.csv")
+comparison_df['ForecastMonth'] = pd.to_datetime(comparison_df['ForecastMonth'])
+
+# Filter to forecast horizon only
+eval_df = comparison_df[comparison_df['ForecastMonth'] >= '2024-09-30']
+
+# Compute metrics
+rmse = root_mean_squared_error(eval_df['Actual'], eval_df['Forecasted_Quantity'])
+mae = mean_absolute_error(eval_df['Actual'], eval_df['Forecasted_Quantity'])
+
+# Avoid divide-by-zero issue in MAPE by filtering out zero-actual rows
+nonzero_eval_df = eval_df[eval_df['Actual'] != 0]
+mape = mean_absolute_percentage_error(
+    nonzero_eval_df['Actual'],
+    nonzero_eval_df['Forecasted_Quantity']
+) * 100
+
+# Display results
+print(f"RMSE: {rmse:.2f}")
+print(f"MAE: {mae:.2f}")
+print(f"MAPE: {mape:.2f}%")
+```
+### Wrap-Up: Prophet Forecasting Approach
+
+In this section, we implemented a robust forecasting pipeline using Facebook Prophet, tailored for monthly SKU-level demand prediction. We trained individual models for over 3,000 SKUs using sales data from January 2023 to August 2024, then generated 7-month ahead forecasts through March 2025. After aligning the forecast output with actual sales data, we evaluated performance using standard accuracy metrics — RMSE, MAE, and MAPE. Additionally, we refined Prophet’s output by eliminating negative and near-zero predictions, ensuring the results were both interpretable and production-ready. This forecasting framework provides a scalable and transparent foundation for inventory planning and supplier ordering decisions.
+
+## STEP 3B - ARIMA Model
+
+In this section, we implement a second forecasting approach using ARIMA (AutoRegressive Integrated Moving Average) - powerful statistical model for time series forecasting. Unlike Prophet, ARIMA does not assume predefined seasonal patterns or trend components. Instead, it learns temporal dependencies from past sales data and is well-suited for datasets with consistent time intervals and moderate history length. We train a separate ARIMA model for each SKU using historical monthly sales, forecast the next 7 months, and apply post-processing steps to clean and store the results. This section enables a direct, head-to-head comparison with Prophet to determine which modeling technique better captures sales behavior in our dataset.
+
+### Step 3B.1 – Import Required Libraries for ARIMA Forecasting
+
+Before we begin building ARIMA-based forecasts, we import the necessary Python libraries for data manipulation, iteration, and silent error handling. These are foundational tools used throughout the modeling pipeline.
+
+What Below Code Does:
+
+- pandas, The core library for handling structured data. I use it to load CSV files, manipulate time series, and structure forecast outputs.
+- numpy,  Enables efficient numerical operations, such as filling or transforming arrays and computing statistical measures.
+- tqdm, Provides a real-time progress bar in loops, especially useful for tracking the per-SKU forecasting loop over thousands of SKUs.
+- warnings.filterwarnings("ignore"), Silences non-critical warnings (often thrown by ARIMA internals), keeping output clean and focused during batch processing.
+
+```python
+# Load the monthly SKU data including zero-sales months
+all_sku_monthly_w0 = pd.read_csv("all_sku_monthly_w0.csv")
+
+# Ensure correct date format
+all_sku_monthly_w0['YearMonth'] = pd.to_datetime(all_sku_monthly_w0['YearMonth'])
+```
+
+### Step 3B.2 – Load the data
+
+To build reliable ARIMA models, we start by loading the preprocessed dataset that includes every SKU for every month, even those with zero sales. Ensuring complete time series continuity is crucial for ARIMA, which assumes a fixed time interval between observations.This step ensures we have a clean, gap-free, time-indexed dataset before feeding it into ARIMA.
+
+What Below Code Does:
+- Reads the preprocessed file all_sku_monthly_w0.csv, which contains a full grid of monthly sales values for each SKU, including months where no units were sold (represented as zeros).
+- Converts the YearMonth column into a proper datetime format using pd.to_datetime(). This is critical for ARIMA, which requires time series indices to be uniform and date-aware.
+
+```python
+# Step3B.2 - Load the data
+
+# Load the monthly SKU data including zero-sales months
+all_sku_monthly_w0 = pd.read_csv("all_sku_monthly_w0.csv")
+
+# Ensure correct date format
+all_sku_monthly_w0['YearMonth'] = pd.to_datetime(all_sku_monthly_w0['YearMonth'])
+```
+
+### Step 3B.3 – Define Training and Test Sets
+
+To evaluate the forecasting accuracy of our ARIMA models, we split the time series data into training and test sets. Each SKU’s historical sales are divided chronologically, with earlier months used to train the model and later months used to test the forecasted values against actual outcomes.
+
+What Below Code Does:
+- The use of end-of-month-aligned dates (e.g., 2023-01-31) ensures compatibility with Prophet’s outputs and avoids double entries from mismatched date formats.
+- Training Set (January 2023 – August 2024): This period provides up to 20 months of historical data per SKU, giving the ARIMA model enough information to learn patterns in demand.
+- Test Set (September 2024 – March 2025):This 7-month window represents our forecast horizon. Predictions made by ARIMA will be compared against these real sales figures for evaluation.
+
+```python
+# Step3B.3 - Define Training and Test Sets
+
+# Define training set
+training_data = all_sku_monthly_w0[
+    (all_sku_monthly_w0['YearMonth'] >= '2023-01-31') & 
+    (all_sku_monthly_w0['YearMonth'] <= '2024-08-31')
+]
+
+# Define test set (forecast period)
+test_data = all_sku_monthly_w0[
+    (all_sku_monthly_w0['YearMonth'] >= '2024-09-30') & 
+    (all_sku_monthly_w0['YearMonth'] <= '2025-03-31')
+]
+```
+
+### Step 3B.4 – Install and Import ARIMA
+
+We use the pmdarima library to automatically fit ARIMA models for each SKU. This library provides the auto_arima() function, which simplifies the model selection process by testing multiple combinations of ARIMA parameters and choosing the best one based on information criteria
+
+What Below Code Does:
+- !pip install pmdarima installs the pmdarima package, which is a Python wrapper around the well-known statsmodels ARIMA implementation. It includes automatic hyperparameter tuning and seasonal decomposition.
+- from pmdarima import auto_arima imports the core function used to build and fit ARIMA models for each SKU.
+
+```python
+# Install the pmdarima package (one-time installation)
+!pip install pmdarima
+
+# Import the auto_arima function from pmdarima
+from pmdarima import auto_arima
+```
+
+### Step 3B.5 – Set Up Forecasting Loop with ARIMA
+
+In this step, we loop through each unique SKU in the training set, fit a dedicated ARIMA model for each one, and forecast sales for the next 7 months. This logic enables independent forecasting per SKU and includes built-in fallbacks to ensure no product is left behind due to model fitting errors.
+
+What Below Code Does:
+- SKU-by-SKU Training Loop:
+  - Iterates through each unique SKU, filters relevant training data, and fits an individual ARIMA model.
+- Model Fitting:
+  - Uses auto_arima() with seasonal=False to allow the model to find the best non-seasonal (p,d,q) configuration using stepwise optimization. This keeps it lightweight and avoids overfitting.
+- Fallback Handling:
+  - If ARIMA fails to converge or throws an exception (common for sparse data), a fallback mechanism replaces the forecast with a flat average of the last 3 months.
+- Forecast Post-Processing: Forecasts are sanitized to ensure
+  - Negative values are set to 0
+  - Extremely small values (e.g., 1e-16) are also zeroed
+  - Values are rounded to 2 decimals for readability
+- Final Output:
+  - All forecasts are stored in a single DataFrame and exported to arima_full_forecast.csv for later evaluation.
+
+ ```python
+# Step3B.5 - Set up forecasting loop
+
+# Prepare list to store forecasts
+arima_forecasts = []
+
+# Get unique SKUs
+sku_list = training_data['Item_ID'].unique()
+
+# Forecasting loop
+for sku in tqdm(sku_list):
+    # Filter the training data for the current SKU
+    sku_train_df = training_data[training_data['Item_ID'] == sku][['YearMonth', 'Monthly_Quantity']]
+
+    # Skip SKUs with all zero historical sales
+    if sku_train_df['Monthly_Quantity'].sum() == 0:
+        continue
+
+    # Ensure datetime index
+    sku_train_df['YearMonth'] = pd.to_datetime(sku_train_df['YearMonth'])
+    sku_train_df.set_index('YearMonth', inplace=True)
+
+    # Extract the target Series for ARIMA
+    y = sku_train_df['Monthly_Quantity']
+
+    # Sanity check
+    if y.isnull().any():
+        print(f"SKU {sku} error: NaNs detected even after cleaning — skipping")
+        continue
+
+    try:
+        # Fit ARIMA without seasonality
+        model = auto_arima(
+            y,
+            seasonal=False,
+            stepwise=True,
+            error_action='ignore',
+            suppress_warnings=True
+        )
+
+        # Forecast next 7 months
+        forecast = model.predict(n_periods=7)
+
+    except Exception as e:
+        print(f"SKU {sku} error: {e} — using fallback average")
+
+        # Fallback: use 3-month average if ARIMA fails
+        fallback_value = y.tail(3).mean()
+        forecast = [fallback_value] * 7
+
+    # Store forecast results
+    forecast_df = pd.DataFrame({
+        'ForecastMonth': pd.date_range(start='2024-09-30', periods=7, freq='M'),
+        'Forecasted_Quantity': forecast,
+        'Item_ID': sku
+    })
+
+    arima_forecasts.append(forecast_df)
+
+# Combine forecasts into single DataFrame
+arima_forecast_df = pd.concat(arima_forecasts, ignore_index=True)
+
+# Fix negative and scientific notation values
+arima_forecast_df['Forecasted_Quantity'] = arima_forecast_df['Forecasted_Quantity'].apply(
+    lambda x: 0 if x < 0 or abs(x) < 1e-5 else round(x, 2)
+)
+
+# Save forecasts to CSV
+arima_forecast_df.to_csv("arima_full_forecast.csv", index=False)
+
+# Preview
+arima_forecast_df.head()
+```
+
+### Step 3B.6 – Compare ARIMA Forecasts with Actuals
+
+Once we've generated forecasts for all SKUs, we evaluate model performance by comparing predictions against the actual sales data from the test period. This step ensures we measure how well the ARIMA model performs in real-world forecasting.
+
+What Below Code Does:
+- Creates a test set by filtering only the actuals from the 7-month forecast window.
+- Standardizes the column names (ForecastMonth, Actual) to match the forecast DataFrame and enable clean merging.
+- Merges forecasted values with actual sales using a LEFT JOIN, ensuring that even SKUs without forecasted output are preserved for analysis.
+- Fills missing forecasts with 0 — this reflects a conservative assumption that no prediction is made for those months.
+- Calculates Forecast Error as the difference between forecasted and actual sales.
+- Saves the result into a CSV for later metric evaluation and reporting.
+
+```python
+## Step3B.6 - Compare Forecast with Actuals
+actual_df = all_sku_monthly_w0[
+    (all_sku_monthly_w0['YearMonth'] >= '2024-09-30') & 
+    (all_sku_monthly_w0['YearMonth'] <= '2025-03-31')].copy()
+
+actual_df.rename(columns={'YearMonth': 'ForecastMonth', 'Monthly_Quantity': 'Actual'}, inplace=True)
+
+forecast_df = arima_forecast_df.copy()
+
+# Merge Actuals LEFT JOIN Forecasts
+comparison_df = pd.merge(
+    actual_df[['ForecastMonth', 'Item_ID', 'Actual']],
+    forecast_df[['ForecastMonth', 'Item_ID', 'Forecasted_Quantity']],
+    on=['ForecastMonth', 'Item_ID'],
+    how='left'  # Keep all actuals
+)
+
+# Fill missing Forecasted_Quantity with 0
+comparison_df['Forecasted_Quantity'] = comparison_df['Forecasted_Quantity'].fillna(0)
+
+# (Optional) Calculate Forecast_Error
+comparison_df['Forecast_Error'] = comparison_df['Forecasted_Quantity'] - comparison_df['Actual']
+
+# Save the full comparison
+comparison_df.to_csv("actual_vs_arima_forecasts.csv", index=False)
+
+print("✅ Full Forecast vs Actual (Full Lineup) Saved: 'Actual_vs_arima_forecasts.csv'")
+```
+### Step 3B.7 – Evaluate ARIMA Forecast Accuracy
+
+To quantify how well ARIMA forecasts performed, we compute standard error metrics: Root Mean Squared Error (RMSE), Mean Absolute Error (MAE), and Mean Absolute Percentage Error (MAPE). These help assess the deviation between predicted and actual sales for the test period.
+
+What Below Code Does:
+- Loads the forecast vs actual CSV generated in the previous step and parses the ForecastMonth column into datetime format.
+- Filters the dataset to include only the forecast horizon: September 2024 to March 2025.
+- Calculates:
+  - RMSE: Measures average magnitude of error — more sensitive to large errors.
+  - MAE: Measures average absolute deviation — more interpretable and stable.
+  - MAPE: Calculates average percentage error — ideal for interpreting accuracy as a percentage of actual demand.
+- Handles division-by-zero by excluding rows where actual quantity is zero from the MAPE calculation.
+- Prints the results in a clean and interpretable format.
+
+### Wrap-Up: ARIMA Forecasting Approach
+
+The ARIMA (AutoRegressive Integrated Moving Average) model was used to forecast monthly sales quantities for over 3,000 unique SKUs. By individually fitting each product's time series using auto_arima() from the pmdarima library, we allowed the model to intelligently select optimal parameters while excluding seasonality to maintain generality.
+
+To ensure completeness and robustness:
+- Any SKUs that failed to converge due to statistical instability were automatically handled using a fallback forecast based on the 3-month trailing average.
+- Forecasts were post-processed to prevent negative or near-zero outputs, ensuring all predicted quantities were production-ready.
+- Evaluation was performed on a 7-month forecast horizon (September 2024 to March 2025), comparing predictions to actual sales using RMSE, MAE, and MAPE.
+
+These metrics allowed us to objectively compare ARIMA against other models (such as Prophet) and determine the most reliable forecasting strategy for procurement planning.
