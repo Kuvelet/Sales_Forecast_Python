@@ -355,6 +355,11 @@ all_sku_monthly_w0.head()
 
 #### Step3A.3 - Set Training and Test Set
 
+-This step splits the time series data into a training set and a test (evaluation) set to allow proper model validation and performance assessment.
+
+-By reserving the most recent 7 months as a test set, we can simulate a real-world forecasting scenario, where future demand is unknown and needs to be predicted.
+
+
 ```python
 # Training set (historical)
 training_data = all_sku_monthly_w0[
@@ -370,52 +375,21 @@ test_data = all_sku_monthly_w0[
 ```
 #### Step3A.4 - Prophet Forecasting Loop
 
-- Loads Prophet, tqdm (for progress bars), and suppresses warnings.
-- Prepares a list to collect forecasts per SKU
-- Loops through each SKU.
-- Retrieves the historical training data (date + quantity)
-- Skips SKUs with all-zero sales (nothing meaningful to model).
-- Renames columns to Prophet's required format: ds (date) and y (target).
-- Instantiates a Prophet model and trains it on the SKU's data.
-- Generates the next 7 month-end dates for forecasting.
-- Runs prediction.
-- Appends SKU ID to the forecast.
-- Adds the forecast result to the list.
-- Combines all SKU forecasts into one DataFrame.
-- Renames output columns to make them easier to interpret.
-- Saves the full forecast result to CSV.
+This block trains a separate Prophet model for each SKU using the historical training set defined earlier. It then forecasts monthly demand for the next 7 months and stores the results.
 
 ```python
 from prophet import Prophet
 from tqdm import tqdm
 import warnings
 warnings.filterwarnings("ignore")
-
-prophet_forecasts_nofilter = []
-
-for sku in tqdm(sku_list):
-    sku_train_df = training_data[training_data['Item_ID'] == sku][['YearMonth', 'Monthly_Quantity']]
-
-    if sku_train_df['Monthly_Quantity'].sum() == 0:
-        continue
-
-    prophet_df = sku_train_df.rename(columns={'YearMonth': 'ds', 'Monthly_Quantity': 'y'})
-
-    try:
-        model = Prophet()
-        model.fit(prophet_df)
-
-        future = model.make_future_dataframe(periods=7, freq='M')
-        forecast = model.predict(future)
-
-        forecast['Item_ID'] = sku
-        prophet_forecasts_nofilter.append(forecast)
-
-    except Exception as e:
-        print(f"SKU {sku} error: {e}")
-
-prophet_forecast_df = pd.concat(prophet_forecasts_nofilter, ignore_index=True)
-prophet_forecast_df.rename(columns={'ds': 'ForecastMonth', 'yhat': 'Forecasted_Quantity'}, inplace=True)
-
-prophet_forecast_df.to_csv("prophet_full_forecast.csv", index=False)
 ```
+- Prophet: Facebook's open-source time series forecasting library.
+- tqdm: Adds a progress bar to the loop, useful for tracking large batch forecasting.
+- warnings.filterwarnings("ignore"): Suppresses output clutter from benign warnings during model fitting.
+
+```python
+prophet_forecasts_nofilter = []
+```
+
+- Initializes a list to hold forecast results from each SKU.
+
