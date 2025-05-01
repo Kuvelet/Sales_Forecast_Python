@@ -375,61 +375,112 @@ test_data = all_sku_monthly_w0[
 ```
 #### Step3A.4 - Prophet Forecasting Loop
 
-This block trains a separate Prophet model for each SKU using the historical training set defined earlier. It then forecasts monthly demand for the next 7 months and stores the results.
+In this step, I build a monthly sales forecast for each SKU using Facebook Prophet, a time series model that captures seasonality and trend.
+
+We train a separate model for each SKU, forecast 7 months into the future, and clean the results for interpretability.
+
+What Below Code Does:
+
+- Loops through each SKU and trains a standalone Prophet model on its monthly sales data.
+- Forecasts 7 months ahead, using the .make_future_dataframe() method.
+- Adds Item_ID to the forecast output so we can trace predictions back to the SKU.
+- Handles any modeling errors gracefully with a try-except block.
+- Cleans the output by:
+  - Replacing negative predictions and tiny decimals (e.g. 8.88e-16) with 0.
+  - Rounding all values to 2 decimal places for neatness.
+- Exports the forecast to prophet_full_forecast.csv.
+
 
 ```python
+# Step3A.4 Forecast Using Prophet
+
 from prophet import Prophet
 from tqdm import tqdm
 import warnings
+
+
+#Imports Python's built-in warnings module and suppresses warning messages. This cleans up the output by hiding minor warnings (common with Prophet).
 warnings.filterwarnings("ignore")
-```
-- Prophet: Facebook's open-source time series forecasting library.
-- tqdm: Adds a progress bar to the loop, useful for tracking large batch forecasting.
-- warnings.filterwarnings("ignore"): Suppresses output clutter from benign warnings during model fitting.
 
----
-
-```python
+# Store forecasts
 prophet_forecasts_nofilter = []
-```
-- Initializes a list to hold forecast results from each SKU.
 
----
-
-'''python
+# Forecast loop
 for sku in tqdm(sku_list):
-```
-- Iterates through every unique SKU in the dataset.
+    sku_train_df = training_data[training_data['Item_ID'] == sku][['YearMonth', 'Monthly_Quantity']]
 
----
+    # Skip SKUs with zero historical sales
+    if sku_train_df['Monthly_Quantity'].sum() == 0:
+        continue
+
+    # Prepare data for Prophet
+    prophet_df = sku_train_df.rename(columns={'YearMonth': 'ds', 'Monthly_Quantity': 'y'})
+
+    try:
+        model = Prophet()
+        model.fit(prophet_df)
+
+        future = model.make_future_dataframe(periods=7, freq='M')
+        forecast = model.predict(future)
+
+        forecast['Item_ID'] = sku
+        prophet_forecasts_nofilter.append(forecast)
+
+    except Exception as e:
+        print(f"SKU {sku} error: {e}")
+
+# Combine results
+prophet_forecast_df = pd.concat(prophet_forecasts_nofilter, ignore_index=True)
+prophet_forecast_df.rename(columns={'ds': 'ForecastMonth', 'yhat': 'Forecasted_Quantity'}, inplace=True)
+
+# Clean Prophet forecasts (no negative or near-zero values)
+prophet_forecast_df['Forecasted_Quantity'] = prophet_forecast_df['Forecasted_Quantity'].apply(
+    lambda x: 0 if x < 0 or abs(x) < 1e-5 else round(x, 2)
+)
+
+# Save forecast data
+prophet_forecast_df.to_csv("prophet_full_forecast.csv", index=False)
+```
+
+#### Step3A.5 - Compare Forecast with Actuals
+
+After generating SKU-level forecasts with Prophet, we compare those predictions to the actual observed sales. This comparison allows us to evaluate model accuracy and prepare for metric calculations such as RMSE, MAE, and MAPE.
+
+What Below Code Does:
+
+- Creates a new comparison DataFrame that aligns forecasted and actual values for each SKU and each month.
+- Renames YearMonth to ForecastMonth so it can match Prophet’s output format and maintain clarity.
+- Uses a left join so all actuals are preserved — even if no forecast was generated (e.g. due to skipped or failed SKUs).
+- Fills missing forecasted values with 0, assuming the model didn’t produce a result for those entries.
+- Adds a new column called Forecast_Error, representing the difference between forecasted and actual sales quantity.
+- Saves the full comparison to a CSV file, which can be used for evaluation or visualization.
 
 ```python
-sku_train_df = training_data[training_data['Item_ID'] == sku][['YearMonth', 'Monthly_Quantity']]
-if sku_train_df['Monthly_Quantity'].sum() == 0:
-    continue
+# Step3A.5 Compare Forecast with Actuals
+
+# Prepare DataFrames
+actual_df = all_sku_monthly_w0.copy()
+actual_df.rename(columns={'YearMonth': 'ForecastMonth', 'Monthly_Quantity': 'Actual'}, inplace=True)
+
+forecast_df = prophet_forecast_df.copy()
+
+# Merge Actuals LEFT JOIN Forecasts
+comparison_df = pd.merge(
+    actual_df[['ForecastMonth', 'Item_ID', 'Actual']],
+    forecast_df[['ForecastMonth', 'Item_ID', 'Forecasted_Quantity']],
+    on=['ForecastMonth', 'Item_ID'],
+    how='left'  # Keep all actuals
+)
+
+# Fill missing Forecasted_Quantity with 0
+comparison_df['Forecasted_Quantity'] = comparison_df['Forecasted_Quantity'].fillna(0)
+
+# Calculate Forecast_Error
+comparison_df['Forecast_Error'] = comparison_df['Forecasted_Quantity'] - comparison_df['Actual']
+
+# Save the full comparison
+comparison_df.to_csv("actual_vs_prophet_forecasts.csv", index=False)
+
+print("✅ Full Forecast vs Actual (Full Lineup) Saved: 'actual_vs_prophet_forecasts.csv'")
 ```
-- Extracts the monthly sales for the current SKU.
-- Skips SKUs with zero total historical sales
 
----
-
-```python
-prophet_df = sku_train_df.rename(columns={'YearMonth': 'ds', 'Monthly_Quantity': 'y'})
-```
-- Prophet requires the input DataFrame to have two columns:
-  - ds: datestamp (must be datetime format)
-  - y: target variable (in this case, quantity sold)
-
----
-
-```python
-model = Prophet()
-model.fit(prophet_df)
-future = model.make_future_dataframe(periods=7, freq='M')
-forecast = model.predict(future)
-```
-- Instantiates and fits a Prophet model using the prepared data.
-- Generates a 7-month future dataframe.
-- Predicts future demand using model.predict().
-
----
