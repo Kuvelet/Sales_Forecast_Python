@@ -355,9 +355,9 @@ all_sku_monthly_w0.head()
 
 #### Step3A.3 - Set Training and Test Set
 
--This step splits the time series data into a training set and a test (evaluation) set to allow proper model validation and performance assessment.
+- This step splits the time series data into a training set and a test (evaluation) set to allow proper model validation and performance assessment.
 
--By reserving the most recent 7 months as a test set, we can simulate a real-world forecasting scenario, where future demand is unknown and needs to be predicted.
+- By reserving the most recent 7 months as a test set, we can simulate a real-world forecasting scenario, where future demand is unknown and needs to be predicted.
 
 
 ```python
@@ -387,9 +387,49 @@ warnings.filterwarnings("ignore")
 - tqdm: Adds a progress bar to the loop, useful for tracking large batch forecasting.
 - warnings.filterwarnings("ignore"): Suppresses output clutter from benign warnings during model fitting.
 
+---
+
 ```python
 prophet_forecasts_nofilter = []
 ```
-
 - Initializes a list to hold forecast results from each SKU.
 
+---
+
+'''python
+for sku in tqdm(sku_list):
+```
+- Iterates through every unique SKU in the dataset.
+
+---
+
+```python
+sku_train_df = training_data[training_data['Item_ID'] == sku][['YearMonth', 'Monthly_Quantity']]
+if sku_train_df['Monthly_Quantity'].sum() == 0:
+    continue
+```
+- Extracts the monthly sales for the current SKU.
+- Skips SKUs with zero total historical sales
+
+---
+
+```python
+prophet_df = sku_train_df.rename(columns={'YearMonth': 'ds', 'Monthly_Quantity': 'y'})
+```
+- Prophet requires the input DataFrame to have two columns:
+  - ds: datestamp (must be datetime format)
+  - y: target variable (in this case, quantity sold)
+
+---
+
+```python
+model = Prophet()
+model.fit(prophet_df)
+future = model.make_future_dataframe(periods=7, freq='M')
+forecast = model.predict(future)
+```
+- Instantiates and fits a Prophet model using the prepared data.
+- Generates a 7-month future dataframe.
+- Predicts future demand using model.predict().
+
+---
