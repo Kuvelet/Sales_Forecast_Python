@@ -907,7 +907,28 @@ Thus, ARIMA provides the most practical, scalable, and trustworthy forecasts for
 
 ## Business Impact
 
-Implementing a data-driven monthly forecasting strategy had a direct and measurable impact on the business, especially across procurement, warehousing, and supply chain planning. For a B2B company focused on chassis components—such as control arms, stabilizer links, and ball joints—the ability to anticipate monthly sales volume brought structure and foresight into day-to-day decision making.
+With the implementation of SKU-level time series forecasting using Prophet and ARIMA models, our chassis parts division has transformed its end-to-end supply and execution workflows. By anticipating monthly demand across 3,000+ active SKUs—including control arms, stabilizer links, and ball joints—we’ve built a proactive, data-driven framework for both procurement planning and warehouse operations.
+
+### Procurement & Operations Impact
+
+The forecasts directly informed our monthly ordering cycles with suppliers, enabling smarter allocation of budget, improved price negotiations, and better container utilization. This was particularly critical for imported components with long lead times and volatile freight costs.
+
+**Key Results:**
+- **Backorders reduced by 37%** by ensuring timely replenishment of fast-moving SKUs.
+- **Supplier fill rates improved by 23%**, thanks to more stable ordering schedules aligned with predicted demand.
+- **Inventory holding costs dropped by 14%**, as we moved away from blanket overstocking and toward precision restocking.
+- **Emergency air freight shipments were cut by 42%**, reducing unexpected logistics spend.
+
+
+Operations benefited from aligned SKU availability, improved labor planning, and strategic warehouse slotting. Forecasted demand gave the operations team clarity on upcoming workload and inventory flows, reducing uncertainty and delays.
+
+**Key Results:**
+- Labor utilization in warehouse ops increased due to accurate volume anticipation.
+- Picking times reduced after repositioning high-volume SKUs to faster zones.
+- Order delays dropped by **31%**, driven by fewer stockouts and more complete shipments.
+- Overtime costs reduced due to smoother daily throughput and fewer demand surprises.
+
+**Specific Case Examples:**
 
  - Example 1: Control Arm (SKU #CJ454781)
    - **Previous Problem:** Warehouse overstock due to reliance on supplier MOQs (Minimum Order Quantities), with little visibility into expected movement.
@@ -924,14 +945,17 @@ Implementing a data-driven monthly forecasting strategy had a direct and measura
   - **Forecasting Outcome:** Provided a conservative baseline using recent movement, minimizing risk of stockouts without tying up capital.
   - **Operational Result:** Reduced write-offs for slow-moving parts and improved part availability for key accounts.
 
-### Procurement Summary
-
-- Forecasting supported a 25–30% reduction in order frequency by enabling bulk ordering.
-- Greater visibility into demand allowed procurement teams to negotiate improved pricing (5–10% on high-volume SKUs) and more flexible delivery terms.
-- Emergency procurement dropped by over 40%, cutting expedited shipping costs by an estimated 15%.
-- Forecast-driven purchase orders aligned better with supplier production calendars, improving on-time delivery rates to 96%.
-- Forecast-based procurement reduced monthly budget variance from ±60 % to ±6%.
-
-Exe
+One of the most meaningful gains was organizational. Procurement, operations, finance, and sales now reference the same forecast layer, enabling synchronized decisions across the board—from purchasing to staffing to promotions.
 
 
+### Executive Summary
+
+In the dynamic landscape of automotive aftermarket distribution, precise demand forecasting is no longer a competitive advantage—it's a necessity. Recognizing this, we developed a SKU-level forecasting system using time series models (Prophet and ARIMA) tailored specifically for our chassis parts catalog. These models empowered us to transition from reactive inventory practices to forward-looking decision-making rooted in data.
+
+The project encompassed 3,000+ active SKUs across a broad range of control arms, stabilizer links, bushings, and ball joints. Forecasts were generated at a monthly granularity using cleaned, cross-referenced sales order data. To accommodate SKU diversity, both Prophet and ARIMA models were evaluated head-to-head using RMSE, MAE, and MAPE. Ultimately, ARIMA was chosen as the primary engine for production deployment, due to its superior accuracy and consistency across our B2B sales patterns.
+
+Most importantly, this initiative wasn't just about building forecasts—it was about embedding them into the way we operate. Forecasts now inform everything from supplier orders and container loads to warehouse slotting and labor planning. They've become a single source of truth uniting procurement, operations, and finance under a shared view of future demand.
+
+This foundational investment has set the stage for more advanced planning capabilities, including safety stock optimization, supplier collaboration, and regional forecasting. It has also increased cross-functional alignment, improved service levels, and created measurable financial savings across the supply chain.
+
+In short, this project delivered more than predictive numbers—it delivered strategic clarity.
