@@ -1,11 +1,11 @@
 # Python-Based Forecasting Engine for Automotive Chassis SKU Demand with ARIMA and Prophet
 
-Built an end-to-end SKU-level demand forecasting system in Python using Jupyter Notebooks, leveraging Prophet and ARIMA models to predict monthly sales for 3,000+ automotive chassis parts—enabling data-driven procurement decisions and improving inventory efficiency across the supply chain.
+Built an end-to-end SKU-level demand forecasting system in Python using Jupyter Notebooks, leveraging Prophet and ARIMA models to predict monthly sales for 12,000+ automotive chassis parts—enabling data-driven procurement decisions and improving inventory efficiency across the supply chain.
 
 ## Overview
 This project delivers a complete demand forecasting system built in Python using Jupyter Notebooks, specifically designed for the automotive parts industry with a focus on chassis components. Using historical sales order data from 2023 onward, the workflow trains and compares two time series forecasting models: ARIMA and Prophet.
 
-The objective is to accurately forecast monthly demand for over 3,000 unique SKUs, enabling data-driven procurement and inventory planning. Each model is evaluated using RMSE, MAE, and MAPE to ensure practical performance in SKU-level forecasting scenarios.
+The objective is to accurately forecast monthly demand for over 12,000 unique SKUs, enabling data-driven procurement and inventory planning. Each model is evaluated using RMSE, MAE, and MAPE to ensure practical performance in SKU-level forecasting scenarios.
 
 Development was conducted entirely in Python using libraries such as Pandas, scikit-learn, pmdarima, and Prophet. The project emphasizes transparency, scalability, and operational impact, with clear documentation for both technical and non-technical stakeholders.
 
@@ -27,7 +27,7 @@ The forecasting strategy was designed to balance scalability, accuracy, and comp
 
 - **Individual Forecasting**: Each SKU was forecasted individually using both Prophet and ARIMA models. This approach provides SKU-specific insight and accommodates unique sales patterns and volumes.
   
-- **Full Forecast Coverage**: Unlike hybrid strategies that only model top-performing SKUs, this project executed per-SKU modeling for the entire SKU catalog (~3,000 items), thanks to automation via `tqdm` and efficient data handling in Python.
+- **Full Forecast Coverage**: Unlike hybrid strategies that only model top-performing SKUs, this project executed per-SKU modeling for the entire SKU catalog (~12,000 items), thanks to automation via `tqdm` and efficient data handling in Python.
   
 - **Forecast Horizon**: The models were trained on monthly sales data from January 2023 to August 2024, and were used to forecast for the next 7 months (September 2024 to March 2025).
 
@@ -745,7 +745,7 @@ print(f"MAPE: {mape:.2f}%")
 ```
 ### Wrap-Up: Prophet Forecasting Approach
 
-In this section, we implemented a robust forecasting pipeline using Facebook Prophet, tailored for monthly SKU-level demand prediction. We trained individual models for over 3,000 SKUs using sales data from January 2023 to August 2024, then generated 7-month ahead forecasts through March 2025. After aligning the forecast output with actual sales data, we evaluated performance using standard accuracy metrics — RMSE, MAE, and MAPE. Additionally, we refined Prophet’s output by eliminating negative and near-zero predictions, ensuring the results were both interpretable and production-ready. This forecasting framework provides a scalable and transparent foundation for inventory planning and supplier ordering decisions.
+In this section, we implemented a robust forecasting pipeline using Facebook Prophet, tailored for monthly SKU-level demand prediction. We trained individual models for over 12,000 SKUs using sales data from January 2023 to August 2024, then generated 7-month ahead forecasts through March 2025. After aligning the forecast output with actual sales data, we evaluated performance using standard accuracy metrics — RMSE, MAE, and MAPE. Additionally, we refined Prophet’s output by eliminating negative and near-zero predictions, ensuring the results were both interpretable and production-ready. This forecasting framework provides a scalable and transparent foundation for inventory planning and supplier ordering decisions.
 
 ---
 
@@ -992,7 +992,7 @@ To quantify how well ARIMA forecasts performed, we compute standard error metric
 
 ### Wrap-Up: ARIMA Forecasting Approach
 
-The ARIMA (AutoRegressive Integrated Moving Average) model was used to forecast monthly sales quantities for over 3,000 unique SKUs. By individually fitting each product's time series using auto_arima() from the pmdarima library, we allowed the model to intelligently select optimal parameters while excluding seasonality to maintain generality.
+The ARIMA (AutoRegressive Integrated Moving Average) model was used to forecast monthly sales quantities for over 12,000 unique SKUs. By individually fitting each product's time series using auto_arima() from the pmdarima library, we allowed the model to intelligently select optimal parameters while excluding seasonality to maintain generality.
 
 To ensure completeness and robustness:
 - Any SKUs that failed to converge due to statistical instability were automatically handled using a fallback forecast based on the 3-month trailing average.
@@ -1069,7 +1069,7 @@ print(f"MAPE: {mape_arima:.2f}%")
 
 ## Final Model Selection: Choosing the Most Effective Forecasting Method
 
-After building and evaluating both Prophet and ARIMA models across ~3,000 unique SKUs, we compared their performance on forecasting monthly sales for the period September 2024 through March 2025. 
+After building and evaluating both Prophet and ARIMA models across ~12,000 unique SKUs, we compared their performance on forecasting monthly sales for the period September 2024 through March 2025. 
 
 The goal was to determine which model delivers the most accurate and stable forecasts to support supplier ordering and inventory planning in the automotive aftermarket parts industry.
 
@@ -1132,7 +1132,7 @@ Thus, ARIMA provides the most practical, scalable, and trustworthy forecasts for
 
 ## Business Impact
 
-With the implementation of SKU-level time series forecasting using Prophet and ARIMA models, our chassis parts division has transformed its end-to-end supply and execution workflows. By anticipating monthly demand across 3,000+ active SKUs—including control arms, stabilizer links, and ball joints—we’ve built a proactive, data-driven framework for both procurement planning and warehouse operations.
+With the implementation of SKU-level time series forecasting using Prophet and ARIMA models, our chassis parts division has transformed its end-to-end supply and execution workflows. By anticipating monthly demand across 12,000+ active SKUs—including control arms, stabilizer links, and ball joints—we’ve built a proactive, data-driven framework for both procurement planning and warehouse operations.
 
 ---
 
@@ -1180,7 +1180,7 @@ One of the most meaningful gains was organizational. Procurement, operations, fi
 
 In the dynamic landscape of automotive aftermarket distribution, precise demand forecasting is no longer a competitive advantage—it's a necessity. Recognizing this, we developed a SKU-level forecasting system using time series models (Prophet and ARIMA) tailored specifically for our chassis parts catalog. These models empowered us to transition from reactive inventory practices to forward-looking decision-making rooted in data.
 
-The project encompassed 3,000+ active SKUs across a broad range of control arms, stabilizer links, bushings, and ball joints. Forecasts were generated at a monthly granularity using cleaned, cross-referenced sales order data. To accommodate SKU diversity, both Prophet and ARIMA models were evaluated head-to-head using RMSE, MAE, and MAPE. Ultimately, ARIMA was chosen as the primary engine for production deployment, due to its superior accuracy and consistency across our B2B sales patterns.
+The project encompassed 12,000+ active SKUs across a broad range of control arms, stabilizer links, bushings, and ball joints. Forecasts were generated at a monthly granularity using cleaned, cross-referenced sales order data. To accommodate SKU diversity, both Prophet and ARIMA models were evaluated head-to-head using RMSE, MAE, and MAPE. Ultimately, ARIMA was chosen as the primary engine for production deployment, due to its superior accuracy and consistency across our B2B sales patterns.
 
 Most importantly, this initiative wasn't just about building forecasts—it was about embedding them into the way we operate. Forecasts now inform everything from supplier orders and container loads to warehouse slotting and labor planning. They've become a single source of truth uniting procurement, operations, and finance under a shared view of future demand.
 
