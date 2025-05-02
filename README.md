@@ -2,6 +2,58 @@
 
 Built an end-to-end SKU-level demand forecasting system in Python using Jupyter Notebooks, leveraging Prophet and ARIMA models to predict monthly sales for 12,000+ automotive chassis parts—enabling data-driven procurement decisions and improving inventory efficiency across the supply chain.
 
+##  Table of Contents
+
+- [Overview](#overview)
+- [Objectives](#objectives)
+- [Forecasting Approach](#forecasting-approach)
+- [Technologies Used](#technologies-used)
+
+###  Step 1 – Data Cleaning & Preparation
+- [Step 1.1: Import Necessary Libraries](#step-11-import-necessary-libraries)
+- [Step 1.2: Load the Data from CSV](#step-12-load-the-data-from-csv)
+- [Step 1.3: Initial Data Cleaning](#step-13-initial-data-cleaning)
+- [Step 1.4: Filter Data from 2023 Onward](#step-14-filter-data-from-2023-onward)
+- [Step 1.5: Aggregate Monthly Sales per SKU](#step-15-aggregate-monthly-sales-per-sku)
+- [Step 1.6: Identify Top SKUs](#step-16-identify-top-skus)
+- [Step 1.7: Separate monthly_sku_data](#step-17-separate-monthly_skudata)
+- [Step 1.8: Export Datasets](#step-18-export-datasets)
+
+###  Step 2 – Exploratory Data Analysis (EDA)
+- [Step 2.1: Import Data & Libraries](#step-21-import-data--libraries)
+- [Step 2.2: Overview of SKU Distribution](#step-22-overview-of-sku-distribution)
+- [Step 2.3: Sales Distribution by SKU](#step-23-sales-distribution-by-sku)
+- [Step 2.4: Individual SKU Seasonality Check](#step-24-individual-sku-seasonality-check)
+
+###  Step 3A – Prophet Model
+- [Step 3A.1: Load Libraries and Normalize Data](#step-3a1-load-libraries-and-normalize-data)
+- [Step 3A.2: Create Complete SKU-Month Grid](#step-3a2-create-complete-sku-month-grid)
+- [Step 3A.3: Set Training and Test Set](#step-3a3-set-training-and-test-set)
+- [Step 3A.4: Prophet Forecasting Loop](#step-3a4-prophet-forecasting-loop)
+- [Step 3A.5: Compare Forecast with Actuals](#step-3a5-compare-forecast-with-actuals)
+- [Step 3A.6: Evaluate Prophet Forecast Accuracy](#step-3a6-evaluate-prophet-forecast-accuracy)
+- [Prophet Forecasting Summary](#wrap-up-prophet-forecasting-approach)
+
+###  Step 3B – ARIMA Model
+- [Step 3B.1: Import Required Libraries](#step-3b1--import-required-libraries-for-arima-forecasting)
+- [Step 3B.2: Load the Data](#step-3b2--load-the-data)
+- [Step 3B.3: Define Training and Test Sets](#step-3b3--define-training-and-test-sets)
+- [Step 3B.4: Install and Import ARIMA](#step-3b4--install-and-import-arima)
+- [Step 3B.5: Set Up Forecasting Loop with ARIMA](#step-3b5--set-up-forecasting-loop-with-arima)
+- [Step 3B.6: Compare ARIMA Forecasts with Actuals](#step-3b6--compare-arima-forecasts-with-actuals)
+- [Step 3B.7: Evaluate ARIMA Forecast Accuracy](#step-3b7--evaluate-arima-forecast-accuracy)
+- [ARIMA Forecasting Summary](#wrap-up-arima-forecasting-approach)
+
+###  Step 4 – Prophet vs ARIMA Forecast Accuracy Evaluation
+- [Step 4.1: Side-by-Side Metric Comparison](#step-4--prophet-vs-arima-forecast-accuracy-evaluation)
+- [Final Model Selection](#final-model-selection-choosing-the-most-effective-forecasting-method)
+
+###  Business Value
+- [Procurement & Operations Impact](#procurement--operations-impact)
+- [Executive Summary](#executive-summary)
+
+---
+
 ## Overview
 This project delivers a complete demand forecasting system built in Python using Jupyter Notebooks, specifically designed for the automotive parts industry with a focus on chassis components. Using historical sales order data from 2023 onward, the workflow trains and compares two time series forecasting models: ARIMA and Prophet.
 
