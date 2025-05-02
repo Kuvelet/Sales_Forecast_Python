@@ -67,7 +67,20 @@ The forecasting strategy was designed to balance scalability, accuracy, and comp
 
 ## Step 1 - Data Cleaning & Preparation
 
-### Step 1.1: Import Necessary Libraries
+This section focuses on importing, filtering, and organizing the raw sales order data into a clean, structured format suitable for forecasting analysis.
+
+The original dataset contains transactional-level entries for customer sales orders (SOs). To ensure accurate time series modeling, we:
+
+- Removed irrelevant rows with missing or zero quantities.
+- Standardized the date field and filtered data starting from 2023.
+- Aggregated order quantities by SKU on a monthly basis to generate a consistent time series.
+- Identified and separated the top 500 SKUs based on total sales volume for individual modeling.
+- Exported three cleaned datasets: top SKUs, remaining SKUs, and the full SKU population.
+
+This preprocessing lays the foundation for accurate modeling by eliminating noise, aligning temporal granularity, and ensuring completeness across all time periods.
+
+### Data Cleaning & Preparation Steps with Explanations
+#### Step 1.1: Import Necessary Libraries
 
 This initial step sets up the Python environment with essential libraries required for data manipulation, numerical computation, and date handling. It also adjusts display settings for better visibility when working with DataFrames in a notebook environment.
 
@@ -96,7 +109,7 @@ pd.set_option('display.max_columns', None)
 ```
 ---
 
-### Step 1.2: Load the Data from CSV
+#### Step 1.2: Load the Data from CSV
 
 In this step, we load the raw sales order data into a pandas DataFrame from a CSV file. This file will serve as the foundation for all subsequent preprocessing, analysis, and forecasting.
 
@@ -122,7 +135,7 @@ data.head()
 
 ---
 
-### Step 1.3: Initial Data Cleaning
+#### Step 1.3: Initial Data Cleaning
 
 This step filters the raw data to retain only meaningful and usable entries for downstream forecasting. Sales transactions with missing or zero values are excluded, as they do not contribute useful signals to demand forecasting models.
 
@@ -154,7 +167,7 @@ print(f"Rows after cleaning: {data_clean.shape[0]}")
 
 ---
 
-### Step 1.4 - Filter Data from 2023 Onward
+#### Step 1.4 - Filter Data from 2023 Onward
 
 To ensure our forecasting model is trained on recent and relevant data, we restrict the dataset to sales occurring in 2023 and later.
 
@@ -180,7 +193,7 @@ print(f"Rows from 2023 onwards: {data_2023.shape[0]}")
 
 ---
 
-### Step 1.5 - Aggregate Monthly Sales per SKU
+#### Step 1.5 - Aggregate Monthly Sales per SKU
 
 This step transforms raw transaction-level data into a structured monthly time series format suitable for forecasting.
 
@@ -210,7 +223,7 @@ monthly_sku_data.head()
 ```
 ---
 
-### Step 1.6 - Identify Top SKUs
+#### Step 1.6 - Identify Top SKUs
 
 This step helps narrow the scope of forecasting to the most impactful products by identifying the top 500 SKUs based on historical sales volume.
 
@@ -237,7 +250,7 @@ top_skus.head(10)
 ```
 ---
 
-### Step 1.7 - Separate `monthly_sku_data`
+#### Step 1.7 - Separate `monthly_sku_data`
 
 After identifying the top 500 SKUs, this step splits the full monthly sales dataset into two groups: one for high-volume SKUs and one for all others.
 
@@ -264,7 +277,7 @@ print(f"All SKUs data rows: {monthly_sku_data.shape[0]}")
 
 ---
 
-### Step 1.8 - Export Datasets
+#### Step 1.8 - Export Datasets
 
 To prepare for modeling and analysis, this step saves the cleaned and segmented datasets as CSV files.
 
@@ -305,7 +318,18 @@ This structured approach improves model performance by ensuring consistent and h
 
 ## Step 2 - Exploratory Data Analysis (EDA)
 
-### Step 2.1 - Import Data & Libraries
+Before building any forecasting models, it is essential to understand the underlying structure, volume, and variability of the data. In this section, we explore trends in monthly sales orders across all SKUs, identify top-performing parts, and evaluate whether any seasonality exists.
+
+### EDA Objective
+
+- Get familiar with the data
+- Validate the integrity and time coverage of the cleaned sales data.
+- Visually assess whether certain SKUs exhibit patterns such as trends, spikes, or seasonality.
+- Align business knowledge with observed patterns
+
+### EDA Steps with Explanations
+
+#### Step 2.1 - Import Data & Libraries
 
 To begin exploratory analysis, we first import the necessary libraries and load the cleaned monthly sales data.
 
@@ -329,7 +353,7 @@ monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str)
 ```
 ---
 
-### Step 2.2 - Overview of SKU Distribution
+#### Step 2.2 - Overview of SKU Distribution
 
 This step provides a high-level view of the dataset’s SKU diversity and monthly sales coverage.
 
@@ -369,7 +393,7 @@ plt.show()
 
 ---
 
-### Step 2.3 - Sales Distribution by SKU
+#### Step 2.3 - Sales Distribution by SKU
 
 This step explores how total sales are distributed across different SKUs, highlighting the most in-demand items.
 
@@ -404,7 +428,7 @@ plt.show()
 
 ---
 
-### Step 2.4 - Individual SKU Seasonality Check
+#### Step 2.4 - Individual SKU Seasonality Check
 
 This step examines whether certain SKUs display seasonal patterns or irregular trends in their monthly sales data. By isolating individual SKUs and visualizing their month-by-month sales over time, we can better understand their behavior and determine the most appropriate forecasting approach.
 
@@ -445,6 +469,16 @@ for sku in sample_skus:
 ![sku_8512191_so_trend](sku_8512191_so_trend.jpg)
 ![sku_8512323_so_trend](sku_8512323_so_trend.jpg)
 ![sku_8514156_so_trend](sku_8514156_so_trend.jpg)
+
+### Exploratory Data Analysis (EDA) Summary
+
+Prior to modeling, we conducted exploratory data analysis to understand the overall sales patterns of our chassis part SKUs. The analysis revealed:
+
+- A wide range of SKU sales volumes, with a small subset of parts accounting for the majority of overall demand.
+- No strong seasonality patterns were observed across most SKUs when visualized monthly. This aligns with industry expectations, as chassis parts (e.g., control arms, bushings, sway bars) are typically replaced based on wear-and-tear or damage, rather than cyclical or seasonal patterns like tires or AC units.
+- Demand across SKUs is relatively sporadic, with many items showing irregular purchase intervals, especially among lower-volume SKUs.
+
+This EDA step was critical to validate model selection strategies and to set realistic expectations for forecast behavior across the SKU portfolio.
 
 ---
 
