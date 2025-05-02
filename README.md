@@ -58,16 +58,28 @@ The forecasting strategy was designed to balance scalability, accuracy, and comp
 - **Prophet**  
   Time series forecasting library developed by Meta, used for modeling trend and seasonality
 
-- **pmdarima (auto_arima)**  
+- **pmdarima (auto_arima)**
   ARIMA model training and parameter selection with minimal manual tuning
 
 - **tqdm**  
   Progress bar utility for visualizing forecast loops across thousands of SKUs
 
 
-## STEP 1 - Data Cleaning & Preparation
+## Step 1 - Data Cleaning & Preparation
 
 ### Step 1.1: Import Necessary Libraries
+
+This initial step sets up the Python environment with essential libraries required for data manipulation, numerical computation, and date handling. It also adjusts display settings for better visibility when working with DataFrames in a notebook environment.
+
+**What Below Code Does:**
+
+- import pandas as pd: Loads the pandas library, which is the backbone of all data manipulation in this project. It allows us to work with structured datasets using DataFrames.
+
+- import numpy as np: Imports NumPy, which is used for numerical operations, especially when performing calculations like averages, error metrics, or transformations.
+
+- from datetime import datetime: Enables parsing and manipulation of date/time values, useful for converting and comparing dates across datasets.
+
+- pd.set_option('display.max_columns', None): Modifies pandas' display settings so all columns in a DataFrame are shown when printed. This is especially helpful when inspecting wide datasets with many variables.
 
 ```python
 # Step 1.1
@@ -82,8 +94,21 @@ from datetime import datetime
 pd.set_option('display.max_columns', None)
 
 ```
+---
 
 ### Step 1.2: Load the Data from CSV
+
+In this step, we load the raw sales order data into a pandas DataFrame from a CSV file. This file will serve as the foundation for all subsequent preprocessing, analysis, and forecasting.
+
+What the Below Code Does:
+
+- pd.read_csv(...): Reads the specified CSV file into a pandas DataFrame named data.
+
+- The r before the string ensures the file path is treated as a raw string, so backslashes aren't misinterpreted.
+
+- The encoding='ISO-8859-1' parameter ensures that any special or non-UTF-8 characters (common in ERP exports or regional encodings) are read correctly without causing decoding errors.
+
+- data.head(): Displays the first five rows of the dataset. This is useful for a quick sanity check to verify that the file was loaded properly and the data structure is as expected.
 
 ```python
 # Step 1.2
@@ -95,12 +120,20 @@ data.head()
 
 ```
 
+---
+
 ### Step 1.3: Initial Data Cleaning
 
-Remove irrelevant rows as per your criteria:
+This step filters the raw data to retain only meaningful and usable entries for downstream forecasting. Sales transactions with missing or zero values are excluded, as they do not contribute useful signals to demand forecasting models.
 
-- Remove rows where Quantity is 0 or null.
-- Remove rows where Item ID is null.
+**What Below Code Does:**
+
+- `print(f"...")`: Displays the total number of rows in the dataset before cleaning using f-string formatting.
+- `data['Quantity'].notnull()`: Filters out rows where the `Quantity` field is missing (null).
+- `(data['Quantity'] != 0)`: Filters out rows with a `Quantity` of 0, which are not useful for demand forecasting.
+- Boolean indexing: Applies both conditions to retain only valid quantity records.
+- `data_clean[data_clean['Item ID'].notnull()]`: Further removes rows with missing `Item ID`, ensuring every record can be mapped to a specific product.
+- Final print: Outputs the total number of rows remaining after cleaning, useful for verifying the effect of the filters.
 
 ```python
 # Step 1.3
@@ -118,7 +151,20 @@ data_clean = data_clean[data_clean['Item ID'].notnull()]
 # Check rows after cleaning
 print(f"Rows after cleaning: {data_clean.shape[0]}")
 ```
-### Step 1.4: Filter Data from 2023 onward
+
+---
+
+### Step 1.4 - Filter Data from 2023 Onward
+
+To ensure our forecasting model is trained on recent and relevant data, we restrict the dataset to sales occurring in 2023 and later.
+
+**What Below Code Does:**
+
+- Converts the `Date` column into proper datetime format using `pd.to_datetime`, coercing any invalid formats to `NaT` (Not a Time).
+- Filters the dataset to include only rows with a `Date` on or after January 1, 2023 — ensuring recent and relevant data for forecasting.
+- Uses `.copy()` to avoid `SettingWithCopyWarning` and maintain data integrity.
+- Prints the number of rows that meet the date criteria, confirming the filtered dataset size.
+
 
 ```python
 # Step 1.4
@@ -132,7 +178,19 @@ data_2023 = data_clean[data_clean['Date'] >= '2023-01-01'].copy()
 print(f"Rows from 2023 onwards: {data_2023.shape[0]}")
 ```
 
-### Step 1.5: Aggregate Monthly Sales per SKU
+---
+
+### Step 1.5 - Aggregate Monthly Sales per SKU
+
+This step transforms raw transaction-level data into a structured monthly time series format suitable for forecasting.
+
+**What Below Code Does:**
+
+- Creates a new column `YearMonth` by converting each date into a monthly period using `.dt.to_period('M')`.
+- Groups the dataset by `YearMonth` and `Item ID`, then sums the `Quantity` values to get total units sold per SKU each month.
+- Resets the index after aggregation to return a clean DataFrame.
+- Renames columns for clarity and consistency in later steps (`Item ID` becomes `Item_ID`, and `Quantity` becomes `Monthly_Quantity`).
+- Displays the first few rows of the aggregated result to verify correctness.
 
 ```python
 # Step 1.5
@@ -150,8 +208,20 @@ monthly_sku_data.columns = ['YearMonth', 'Item_ID', 'Monthly_Quantity']
 # Check aggregated data
 monthly_sku_data.head()
 ```
+---
 
-### Step 1.6: Identify Top SKUs
+### Step 1.6 - Identify Top SKUs
+
+This step helps narrow the scope of forecasting to the most impactful products by identifying the top 500 SKUs based on historical sales volume.
+
+**What Below Code Does:**
+
+- Groups the monthly data by `Item_ID` and sums total sales across all months.
+- Sorts the SKUs in descending order of total quantity sold.
+- Selects the top 500 SKUs, which will be prioritized for forecasting due to their high volume and business impact.
+- Renames the aggregated sales column to `Total Sales Quantity` for better readability in outputs.
+- Displays the top 10 SKUs as a preview.
+
 
 ```python
 # Step 1.6
@@ -165,8 +235,18 @@ top_skus = top_skus.rename(columns={'Monthly_Quantity': 'Total Sales Quantity'})
 # Check top SKUs
 top_skus.head(10)
 ```
+---
 
-### Step 1.7: Seperate monthly_sku_data
+### Step 1.7 - Separate `monthly_sku_data`
+
+After identifying the top 500 SKUs, this step splits the full monthly sales dataset into two groups: one for high-volume SKUs and one for all others.
+
+**What Below Code Does:**
+
+- Filters `monthly_sku_data` to include only rows for SKUs that are in the top 500 list, storing them in `top_sku_data`.
+- Uses the inverse condition to capture all other SKUs not in the top 500, assigning them to `remaining_sku_data`.
+- Prints row counts for both groups and the total to validate the separation and ensure no data is lost.
+
 
 ```python
 # Step 1.7
@@ -182,7 +262,18 @@ print(f"Remaining SKUs data rows: {remaining_sku_data.shape[0]}")
 print(f"All SKUs data rows: {monthly_sku_data.shape[0]}")
 ```
 
-### Step 1.8: Export Datasets
+---
+
+### Step 1.8 - Export Datasets
+
+To prepare for modeling and analysis, this step saves the cleaned and segmented datasets as CSV files.
+
+**What Below Code Does:**
+
+- Saves the monthly data for top 500 SKUs to `top_sku_monthly.csv`.
+- Saves the remaining SKUs' monthly data to `remaining_sku_monthly.csv`.
+- Exports the full dataset of all SKUs to `all_sku_monthly.csv`.
+- These files will be used in later steps for forecasting with Prophet and ARIMA.
 
 ```python
 # Step 1.8
@@ -191,6 +282,8 @@ top_sku_data.to_csv('top_sku_monthly.csv', index=False)
 remaining_sku_data.to_csv('remaining_sku_monthly.csv', index=False)
 monthly_sku_data.to_csv('all_sku_monthly.csv', index=False)
 ```
+
+---
 
 In this section, we performed essential preprocessing to ensure our dataset was clean and ready for reliable forecasting. The key actions included:
 
@@ -210,9 +303,18 @@ This structured approach improves model performance by ensuring consistent and h
 
 ---
 
-## STEP 2 - Exploratory Data Analysis (EDA)
+## Step 2 - Exploratory Data Analysis (EDA)
 
-### Step 2.1: Import Data & Libraries
+### Step 2.1 - Import Data & Libraries
+
+To begin exploratory analysis, we first import the necessary libraries and load the cleaned monthly sales data.
+
+**What Below Code Does:**
+
+- Imports `pandas` for data manipulation and `matplotlib.pyplot` / `seaborn` for visualizations.
+- Loads the `monthly_sku_data.csv` file created during preprocessing.
+- Converts the `YearMonth` column from string to datetime format for proper time-based analysis and plotting.
+
 
 ```python
 import pandas as pd
@@ -225,8 +327,20 @@ monthly_data = pd.read_csv('monthly_sku_data.csv')
 # Convert 'YearMonth' to datetime
 monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str))
 ```
+---
 
-### Step 2.2: Overview of SKU Distribution
+### Step 2.2 - Overview of SKU Distribution
+
+This step provides a high-level view of the dataset’s SKU diversity and monthly sales coverage.
+
+**What Below Code Does:**
+
+- Prints the number of unique SKUs (Item_ID) in the dataset.
+- Displays the date range covered in the dataset by identifying the earliest and latest `YearMonth`.
+- Aggregates total monthly sales quantities across all SKUs.
+- Uses Seaborn to plot a line graph showing overall monthly sales trend over time.
+- Labels the plot with appropriate titles and axis labels for clarity.
+- Saves the plot as a high-resolution JPEG file for use in presentations or reports.
 
 ```pyton
 # Step 2.2
@@ -253,7 +367,21 @@ plt.show()
 ```
 ![monthly_so_trend](monthly_so_trend.jpg)
 
-### Step 2.3: Sales Distribution by SKU
+---
+
+### Step 2.3 - Sales Distribution by SKU
+
+This step explores how total sales are distributed across different SKUs, highlighting the most in-demand items.
+
+**What Below Code Does:**
+
+- Groups data by `Item_ID` and sums up `Monthly_Quantity` to get total sales per SKU.
+- Sorts the SKUs in descending order based on total quantity.
+- Selects the top 20 SKUs with the highest total sales.
+- Converts SKU identifiers to strings to ensure they display correctly on the y-axis of the plot.
+- Creates a horizontal bar chart showing the total sales volume for the top 20 SKUs.
+- Adds plot titles, labels, and gridlines for better readability.
+
 
 ```python
 # Step 2.3: Sales Distribution by SKU
@@ -274,7 +402,19 @@ plt.show()
 ```
 ![top20_skus_total_so](top20_skus_total_so.jpg)
 
-### Step 2.4: Individual SKU Seasonality Check
+---
+
+### Step 2.4 - Individual SKU Seasonality Check
+
+This step examines whether certain SKUs display seasonal patterns or irregular trends in their monthly sales data. By isolating individual SKUs and visualizing their month-by-month sales over time, we can better understand their behavior and determine the most appropriate forecasting approach.
+
+**What Below Code Does:**
+
+- Selects a single SKU from the dataset to evaluate its sales trend.
+- Generates a line plot showing monthly quantities sold for that SKU.
+- Reveals whether the sales pattern is seasonal, volatile, or flat.
+- Supports decisions regarding whether to apply seasonal models like Prophet or simpler models like ARIMA without seasonality.
+- Helps stakeholders and forecasters visually validate SKU-specific trends before modeling.
 
 ```python
 
@@ -291,7 +431,8 @@ for sku in sample_skus:
     sns.lineplot(data=temp, x='YearMonth', y='Monthly_Quantity')
     plt.title(f'SKU {sku} - Monthly Sales Trend')
     plt.xlabel("Month")
-    plt.ylabel("Quantity")
+    plt.ylabel("Quantity")Supports decisions regarding whether to apply seasonal models like Prophet or simpler models like ARIMA without seasonality.
+- Helps stakeholders and forecasters visually validate SKU-specific trends before modeling.
     plt.grid(True)
 
 # Export before showing
@@ -358,8 +499,17 @@ Prophet is fit on training data and asked to predict the next 7 months. There is
 
 #### Step 3A.1 - Load Libraries and Normalize Data
 
-- Loads the preprocessed monthly sales data from CSV.
-- Converts all date values in the YearMonth column to the last day of each month (e.g. 2023-01-31)
+This step sets up the foundational environment by importing required libraries and preparing the monthly sales dataset for forecasting.
+
+**What the Below Code Does:**
+
+- Imports essential libraries:
+  - `pandas` for data handling,
+  - `numpy` for numerical operations,
+  - `product` from `itertools` to create all combinations of SKUs and dates later on.
+- Reads the `all_sku_monthly.csv` file, which contains monthly sales quantities by SKU.
+- Ensures the `YearMonth` column is treated as a proper datetime object.
+- Applies `.MonthEnd(0)` to shift all date values to the last calendar day of their respective month. This ensures consistency with Prophet, which generates forecasts using end-of-month timestamps by default.
 
 ```python
 import pandas as pd
@@ -374,11 +524,18 @@ monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str)
 
 #### Step 3A.2 - Create Complete SKU-Month Grid
 
-- Extracts all unique SKUs.
-- Creates a list of all month-end dates from Jan 2023 to Mar 2025.
-- Uses product() to build a DataFrame with all possible combinations of SKU and date.
-- Merges the original sales data into the full SKU-month grid.
-- Fills in missing sales values with 0, so we can forecast even when there's no recorded sales.
+This step ensures that every SKU has an entry for every month, even if there were no sales in that month. This is essential for time series forecasting models like Prophet that expect continuous and evenly spaced time intervals.
+
+What the below code does:
+
+- Creates a list of all month-end dates from January 2023 to March 2025 using `pd.date_range` with `'ME'` (month-end) frequency.
+- Extracts the list of all unique `Item_ID`s (SKUs) from the dataset.
+- Uses `product()` from `itertools` to generate all possible combinations of SKU and month-end date.
+- Constructs a new DataFrame called `sku_month_combinations` from these combinations.
+- Performs a left join with the original sales data to merge actual sales values into the complete SKU-month grid.
+- Fills any missing `Monthly_Quantity` values with 0, ensuring that SKUs with no sales in a given month are represented as zero.
+- Saves the completed dataset to a new CSV file `all_sku_monthly_w0.csv` for downstream modeling and evaluation.
+
 
 ```python
 
@@ -824,7 +981,7 @@ These metrics allowed us to objectively compare ARIMA against other models (such
 
 This step performs a side-by-side performance comparison of the Prophet and ARIMA models across the same forecast horizon (September 2024 to March 2025). The evaluation uses industry-standard error metrics to quantify which model provided better sales quantity forecasts for the SKUs.
 
-What Below Code Does:
+**What Below Code Does:**
 - Loads final forecast comparison files for both Prophet and ARIMA.
 - Filters only the forecast period (test set: September 2024 – March 2025).
 - Computes three key metrics for each model:
