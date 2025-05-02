@@ -1,4 +1,6 @@
-# Auto Parts Sales Forecasting Project
+# Python-Based Forecasting Engine for Automotive Chassis SKU Demand with ARIMA and Prophet
+
+Built an end-to-end SKU-level demand forecasting system in Python using Jupyter Notebooks, leveraging Prophet and ARIMA models to predict monthly sales for 3,000+ automotive chassis parts—enabling data-driven procurement decisions and improving inventory efficiency across the supply chain.
 
 ## Overview
 Forecasting monthly auto part SKU sales using historical sales data (2023 onwards).
