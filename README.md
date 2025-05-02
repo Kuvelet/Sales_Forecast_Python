@@ -522,6 +522,8 @@ monthly_data = pd.read_csv("all_sku_monthly.csv")
 monthly_data['YearMonth'] = pd.to_datetime(monthly_data['YearMonth'].astype(str)) + pd.offsets.MonthEnd(0)
 ```
 
+---
+
 #### Step 3A.2 - Create Complete SKU-Month Grid
 
 This step ensures that every SKU has an entry for every month, even if there were no sales in that month. This is essential for time series forecasting models like Prophet that expect continuous and evenly spaced time intervals.
@@ -554,6 +556,8 @@ all_sku_monthly_w0.to_csv("all_sku_monthly_w0.csv", index=False)
 all_sku_monthly_w0.head()
 ```
 
+---
+
 #### Step3A.3 - Set Training and Test Set
 
 - This step splits the time series data into a training set and a test (evaluation) set to allow proper model validation and performance assessment.
@@ -574,6 +578,9 @@ test_data = all_sku_monthly_w0[
     (all_sku_monthly_w0['YearMonth'] <= '2025-03-31')
 ]
 ```
+
+---
+
 #### Step3A.4 - Prophet Forecasting Loop
 
 In this step, I build a monthly sales forecast for each SKU using Facebook Prophet, a time series model that captures seasonality and trend.
@@ -643,6 +650,8 @@ prophet_forecast_df['Forecasted_Quantity'] = prophet_forecast_df['Forecasted_Qua
 prophet_forecast_df.to_csv("prophet_full_forecast.csv", index=False)
 ```
 
+---
+
 #### Step3A.5 - Compare Forecast with Actuals
 
 After generating SKU-level forecasts with Prophet, we compare those predictions to the actual observed sales. This comparison allows us to evaluate model accuracy and prepare for metric calculations such as RMSE, MAE, and MAPE.
@@ -684,6 +693,9 @@ comparison_df.to_csv("actual_vs_prophet_forecasts.csv", index=False)
 
 print("✅ Full Forecast vs Actual (Full Lineup) Saved: 'actual_vs_prophet_forecasts.csv'")
 ```
+
+---
+
 #### Step3A.6 - Evaluate Prophet Forecast Accuracy
 
 In this step, we compute standard forecast accuracy metrics — RMSE, MAE, and MAPE — by comparing the forecasted quantities with actual sales from the test period (2024-09-30 to 2025-03-31).
@@ -759,6 +771,7 @@ all_sku_monthly_w0 = pd.read_csv("all_sku_monthly_w0.csv")
 # Ensure correct date format
 all_sku_monthly_w0['YearMonth'] = pd.to_datetime(all_sku_monthly_w0['YearMonth'])
 ```
+---
 
 ### Step 3B.2 – Load the data
 
@@ -777,6 +790,8 @@ all_sku_monthly_w0 = pd.read_csv("all_sku_monthly_w0.csv")
 # Ensure correct date format
 all_sku_monthly_w0['YearMonth'] = pd.to_datetime(all_sku_monthly_w0['YearMonth'])
 ```
+
+---
 
 ### Step 3B.3 – Define Training and Test Sets
 
@@ -803,6 +818,8 @@ test_data = all_sku_monthly_w0[
 ]
 ```
 
+---
+
 ### Step 3B.4 – Install and Import ARIMA
 
 We use the pmdarima library to automatically fit ARIMA models for each SKU. This library provides the auto_arima() function, which simplifies the model selection process by testing multiple combinations of ARIMA parameters and choosing the best one based on information criteria
@@ -818,6 +835,8 @@ We use the pmdarima library to automatically fit ARIMA models for each SKU. This
 # Import the auto_arima function from pmdarima
 from pmdarima import auto_arima
 ```
+
+---
 
 ### Step 3B.5 – Set Up Forecasting Loop with ARIMA
 
@@ -911,6 +930,8 @@ arima_forecast_df.to_csv("arima_full_forecast.csv", index=False)
 arima_forecast_df.head()
 ```
 
+---
+
 ### Step 3B.6 – Compare ARIMA Forecasts with Actuals
 
 Once we've generated forecasts for all SKUs, we evaluate model performance by comparing predictions against the actual sales data from the test period. This step ensures we measure how well the ARIMA model performs in real-world forecasting.
@@ -952,6 +973,9 @@ comparison_df.to_csv("actual_vs_arima_forecasts.csv", index=False)
 
 print("✅ Full Forecast vs Actual (Full Lineup) Saved: 'Actual_vs_arima_forecasts.csv'")
 ```
+
+---
+
 ### Step 3B.7 – Evaluate ARIMA Forecast Accuracy
 
 To quantify how well ARIMA forecasts performed, we compute standard error metrics: Root Mean Squared Error (RMSE), Mean Absolute Error (MAE), and Mean Absolute Percentage Error (MAPE). These help assess the deviation between predicted and actual sales for the test period.
@@ -976,6 +1000,8 @@ To ensure completeness and robustness:
 - Evaluation was performed on a 7-month forecast horizon (September 2024 to March 2025), comparing predictions to actual sales using RMSE, MAE, and MAPE.
 
 These metrics allowed us to objectively compare ARIMA against other models (such as Prophet) and determine the most reliable forecasting strategy for procurement planning.
+
+---
 
 ## Step 4 – Prophet vs ARIMA Forecast Accuracy Evaluation
 
@@ -1108,6 +1134,8 @@ Thus, ARIMA provides the most practical, scalable, and trustworthy forecasts for
 
 With the implementation of SKU-level time series forecasting using Prophet and ARIMA models, our chassis parts division has transformed its end-to-end supply and execution workflows. By anticipating monthly demand across 3,000+ active SKUs—including control arms, stabilizer links, and ball joints—we’ve built a proactive, data-driven framework for both procurement planning and warehouse operations.
 
+---
+
 ### Procurement & Operations Impact
 
 The forecasts directly informed our monthly ordering cycles with suppliers, enabling smarter allocation of budget, improved price negotiations, and better container utilization. This was particularly critical for imported components with long lead times and volatile freight costs.
@@ -1146,6 +1174,7 @@ Operations benefited from aligned SKU availability, improved labor planning, and
 
 One of the most meaningful gains was organizational. Procurement, operations, finance, and sales now reference the same forecast layer, enabling synchronized decisions across the board—from purchasing to staffing to promotions.
 
+---
 
 ### Executive Summary
 
